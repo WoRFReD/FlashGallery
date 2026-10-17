@@ -1,4 +1,4 @@
-// Version 1.12 - FlashGallery
+// Version 1.13 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.ui.components
@@ -32,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -118,8 +119,14 @@ fun AboutDialog(
                     fontWeight = FontWeight.Bold
                 )
 
+                val appVersion = remember {
+                    try {
+                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.13"
+                    } catch (_: Exception) { "1.13" }
+                }
+
                 Text(
-                    text = "Versión 1.12",
+                    text = "Versión $appVersion",
                     color = FlashCyan,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold

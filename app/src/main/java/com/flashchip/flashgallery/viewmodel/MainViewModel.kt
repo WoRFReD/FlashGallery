@@ -472,7 +472,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun checkForUpdates(manual: Boolean = false, onUpToDate: (() -> Unit)? = null) {
         viewModelScope.launch {
             _uiState.update { it.copy(isCheckingOta = true) }
-            val release = otaRepository.checkLatestRelease("1.11")
+            val currentVersion = try {
+                val app = getApplication<Application>()
+                val pInfo = app.packageManager.getPackageInfo(app.packageName, 0)
+                pInfo.versionName ?: "1.13"
+            } catch (e: Exception) {
+                "1.13"
+            }
+            val release = otaRepository.checkLatestRelease(currentVersion)
             _uiState.update { it.copy(isCheckingOta = false) }
             if (release != null && release.isNewer) {
                 _uiState.update {

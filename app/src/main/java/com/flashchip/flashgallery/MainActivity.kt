@@ -1,4 +1,4 @@
-// Version 1.12 - FlashGallery
+// Version 1.13 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery
@@ -322,7 +322,7 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = "v1.12 • by WoRFReD",
+                                        text = "v1.13 • by WoRFReD",
                                         color = FlashCyan,
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Medium
@@ -577,7 +577,10 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
             isCheckingUpdates = uiState.isCheckingOta,
             onCheckUpdates = {
                 viewModel.checkForUpdates(manual = true) {
-                    Toast.makeText(context, "Tienes la versión más reciente (v1.12)", Toast.LENGTH_SHORT).show()
+                    val currentVer = try {
+                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.13"
+                    } catch (_: Exception) { "1.13" }
+                    Toast.makeText(context, "Tienes la versión más reciente (v$currentVer)", Toast.LENGTH_SHORT).show()
                 }
             },
             onDismiss = { viewModel.showAboutDialog(false) }

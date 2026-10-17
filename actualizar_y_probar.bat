@@ -364,12 +364,18 @@ echo [VERSION DETECTADA]: FlashGallery !TAG!
 echo ====================================================
 
 :: ------------------------------------------------------
-:: 7. COMPILACION CON GRADLE
+:: 7. COMPILACION RELEASE CON GRADLE (APK OFICIAL FIRMADA)
 :: ------------------------------------------------------
 echo.
-echo [1/4] Compilando APK con Gradle (!TAG!)...
+echo [1/4] Compilando APK Release oficial con Gradle (!TAG!)...
 
-call gradlew.bat assembleDebug
+:: Asegurar que existe el almacen de claves release
+if not exist "%~dp0flashgallery-release.jks" (
+    echo [INFO] Creando certificado de firma Release para FlashGallery...
+    "%JAVA_HOME%\bin\keytool.exe" -genkeypair -v -keystore "%~dp0flashgallery-release.jks" -storepass "flashgallerypass" -alias "flashgallery" -keypass "flashgallerypass" -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=WoRFReD, OU=FlashChip, O=FlashChip, L=Madrid, ST=Madrid, C=ES" >nul 2>&1
+)
+
+call gradlew.bat assembleRelease
 
 if %errorlevel% neq 0 (
     echo.
@@ -378,7 +384,7 @@ if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
 
-set "ORIGINAL_APK=%~dp0app\build\outputs\apk\debug\app-debug.apk"
+set "ORIGINAL_APK=%~dp0app\build\outputs\apk\release\app-release.apk"
 set "RELEASE_APK=%~dp0FlashGallery.apk"
 
 if not exist "%ORIGINAL_APK%" (
