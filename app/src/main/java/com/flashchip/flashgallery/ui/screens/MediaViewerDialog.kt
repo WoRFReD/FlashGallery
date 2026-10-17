@@ -1,4 +1,4 @@
-// Version 1.16 - FlashGallery
+// Version 1.17 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.ui.screens
@@ -17,9 +17,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -153,7 +154,13 @@ fun MediaViewerDialog(
         sdf.format(currentItem.dateTaken)
     }
 
-    fun triggerOcr(item: MediaItem, touchOffset: Offset?, boxSize: IntSize? = null) {
+    fun triggerOcr(
+        item: MediaItem,
+        touchOffset: Offset?,
+        boxSize: IntSize? = null,
+        currentScale: Float = 1f,
+        currentOffset: Offset = Offset.Zero
+    ) {
         if (item.isVideo) return
         isOcrScanning = true
         coroutineScope.launch {
@@ -163,6 +170,12 @@ fun MediaViewerDialog(
 
                 var selectedText: String? = null
                 if (touchOffset != null && boxSize != null && boxSize.width > 0 && boxSize.height > 0 && result.imageWidth > 0 && result.imageHeight > 0) {
+                    val centerX = boxSize.width / 2f
+                    val centerY = boxSize.height / 2f
+                    val effectiveScale = if (currentScale > 0.1f) currentScale else 1f
+                    val unscaledX = (touchOffset.x - currentOffset.x - centerX) / effectiveScale + centerX
+                    val unscaledY = (touchOffset.y - currentOffset.y - centerY) / effectiveScale + centerY
+
                     val scaleFactor = minOf(
                         boxSize.width.toFloat() / result.imageWidth.toFloat(),
                         boxSize.height.toFloat() / result.imageHeight.toFloat()
@@ -172,8 +185,8 @@ fun MediaViewerDialog(
                     val left = (boxSize.width - renderedW) / 2f
                     val top = (boxSize.height - renderedH) / 2f
 
-                    val imgX = (touchOffset.x - left) / scaleFactor
-                    val imgY = (touchOffset.y - top) / scaleFactor
+                    val imgX = (unscaledX - left) / scaleFactor
+                    val imgY = (unscaledY - top) / scaleFactor
                     selectedText = OcrScanner.findElementAt(result, imgX, imgY)
                 }
 
@@ -245,9 +258,9 @@ fun MediaViewerDialog(
                         PhotoViewerPage(
                             item = item,
                             onTap = { showControls = !showControls },
-                            onLongPress = { touchOffset, boxSize ->
+                            onLongPress = { touchOffset, boxSize, scale, offset ->
                                 if (page == pagerState.currentPage) {
-                                    triggerOcr(item, touchOffset, boxSize)
+                                    triggerOcr(item, touchOffset, boxSize, scale, offset)
                                 }
                             },
                             onScaleChanged = { scale ->
@@ -489,22 +502,28 @@ fun MediaViewerDialog(
 
 /**
  * Página para visualizar una foto:
- * - A escala 1x: El swipe lateral con 1 dedo pasa de foto de inmediato sin interferencias.
- * - Con 2 dedos: Permite zoom con pellizco (pinch-to-zoom).
- * - Con doble toque: Alterna rápidamente entre zoom 2.5x y 1x.
- * - Con zoom >1x: Permite desplazarse libremente dentro de la foto ampliada.
+ * - A escala 1x: El swipe lateral con 1 dedo pasa de foto de inmediato sin interferencias (HorizontalPager).
+ * - Con 2 dedos: Permite zoom fluido con pellizco (pinch-to-zoom) y desplazamiento (pan) en tiempo real.
+ * - Con doble toque: Alterna suavemente entre zoom centrado en el punto pulsado (2.5x) y 1x.
+ * - Con zoom >1x: Permite desplazarse libremente con 1 dedo o 2 dedos dentro de la foto ampliada.
  */
 @Composable
 private fun PhotoViewerPage(
     item: MediaItem,
     onTap: () -> Unit,
-    onLongPress: (Offset, IntSize) -> Unit,
+    onLongPress: (touchOffset: Offset, boxSize: IntSize, scale: Float, offset: Offset) -> Unit,
     onScaleChanged: (Float) -> Unit
 ) {
     val context = LocalContext.current
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
+
+    LaunchedEffect(item.id) {
+        scale = 1f
+        offset = Offset.Zero
+        onScaleChanged(1f)
+    }
 
     Box(
         modifier = Modifier
@@ -513,55 +532,77 @@ private fun PhotoViewerPage(
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { onTap() },
-                    onDoubleTap = {
-                        val newScale = if (scale > 1f) 1f else 2.5f
+                    onDoubleTap = { tapOffset ->
+                        val newScale = if (scale > 1.05f) 1f else 2.5f
                         scale = newScale
-                        if (newScale == 1f) {
+                        if (newScale <= 1.05f) {
                             offset = Offset.Zero
+                        } else if (boxSize.width > 0 && boxSize.height > 0) {
+                            val center = Offset(boxSize.width / 2f, boxSize.height / 2f)
+                            val targetOffset = (center - tapOffset) * (newScale - 1f)
+                            val maxX = maxOf(0f, (boxSize.width * (newScale - 1f)) / 2f)
+                            val maxY = maxOf(0f, (boxSize.height * (newScale - 1f)) / 2f)
+                            offset = Offset(
+                                targetOffset.x.coerceIn(-maxX, maxX),
+                                targetOffset.y.coerceIn(-maxY, maxY)
+                            )
                         }
                         onScaleChanged(newScale)
                     },
                     onLongPress = { touchOffset ->
-                        onLongPress(touchOffset, boxSize)
+                        onLongPress(touchOffset, boxSize, scale, offset)
                     }
                 )
             }
-            .then(
-                if (scale > 1f) {
-                    Modifier.pointerInput(scale) {
-                        detectTransformGestures { _, pan, zoom, _ ->
-                            val newScale = (scale * zoom).coerceIn(1f, 5f)
-                            scale = newScale
-                            if (newScale > 1f) {
-                                offset = Offset(offset.x + pan.x, offset.y + pan.y)
-                            } else {
-                                offset = Offset.Zero
-                            }
-                            onScaleChanged(newScale)
-                        }
-                    }
-                } else {
-                    Modifier.pointerInput(Unit) {
-                        awaitEachGesture {
-                            do {
-                                val event = awaitPointerEvent()
-                                val pointers = event.changes
-                                if (pointers.size >= 2) {
-                                    val zoom = event.calculateZoom()
-                                    if (zoom > 1.05f) {
-                                        val newScale = (scale * zoom).coerceIn(1f, 5f)
-                                        scale = newScale
-                                        onScaleChanged(newScale)
-                                        pointers.forEach { it.consume() }
-                                    }
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    do {
+                        val event = awaitPointerEvent()
+                        val canceled = event.changes.any { it.isConsumed }
+                        if (canceled) break
+
+                        val pressedPointers = event.changes.filter { it.pressed }
+                        val pointerCount = pressedPointers.size
+
+                        if (pointerCount >= 2) {
+                            // Dos o más dedos: Zoom por pellizco (pinch-to-zoom) fluido y proporcional
+                            val zoomChange = event.calculateZoom()
+                            val panChange = event.calculatePan()
+
+                            if (zoomChange != 1f || panChange != Offset.Zero) {
+                                val newScale = (scale * zoomChange).coerceIn(1f, 5f)
+                                scale = newScale
+
+                                if (newScale > 1f && boxSize.width > 0 && boxSize.height > 0) {
+                                    val maxX = maxOf(0f, (boxSize.width * (newScale - 1f)) / 2f)
+                                    val maxY = maxOf(0f, (boxSize.height * (newScale - 1f)) / 2f)
+                                    val newX = (offset.x + panChange.x).coerceIn(-maxX, maxX)
+                                    val newY = (offset.y + panChange.y).coerceIn(-maxY, maxY)
+                                    offset = Offset(newX, newY)
+                                } else {
+                                    offset = Offset.Zero
                                 }
-                                // Con 1 dedo a escala 1x no consumimos nada:
-                                // El HorizontalPager maneja el deslizamiento horizontal a la perfección
-                            } while (event.changes.any { it.pressed })
+
+                                onScaleChanged(newScale)
+                                event.changes.forEach { it.consume() }
+                            }
+                        } else if (pointerCount == 1 && scale > 1.05f) {
+                            // Un solo dedo mientras la imagen está ampliada: Pan / Desplazamiento
+                            val panChange = event.calculatePan()
+                            if (panChange != Offset.Zero && boxSize.width > 0 && boxSize.height > 0) {
+                                val maxX = maxOf(0f, (boxSize.width * (scale - 1f)) / 2f)
+                                val maxY = maxOf(0f, (boxSize.height * (scale - 1f)) / 2f)
+                                val newX = (offset.x + panChange.x).coerceIn(-maxX, maxX)
+                                val newY = (offset.y + panChange.y).coerceIn(-maxY, maxY)
+                                offset = Offset(newX, newY)
+
+                                event.changes.forEach { it.consume() }
+                            }
                         }
-                    }
+                    } while (event.changes.any { it.pressed })
                 }
-            ),
+            },
         contentAlignment = Alignment.Center
     ) {
         AsyncImage(

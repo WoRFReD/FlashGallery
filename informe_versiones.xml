@@ -222,5 +222,19 @@
                 <Cambio tipo="interfaz">Botón de escaneo OCR directo en la barra superior del visor de fotos para escanear a petición sin necesidad de pulsar sobre la pantalla.</Cambio>
             </Cambios>
         </Version>
+        <!-- ========================================== -->
+        <!-- Versión 1.17                               -->
+        <!-- ========================================== -->
+        <Version id="1.17" codigo="117">
+            <Fecha>17/10/2026</Fecha>
+            <Titulo>Zoom por pellizco ultrafluido, desplazamiento libre (pan) y presentacion oficial en GitHub</Titulo>
+            <Cambios>
+                <Cambio tipo="correccion">Reescritura completa del motor tactil de zoom por pellizco (pinch-to-zoom): eliminado el corte abrupto y los tirones en el visor; ahora la ampliacion sigue fielmente los dedos en tiempo real de 1x a 5x con precision continua.</Cambio>
+                <Cambio tipo="optimizacion">Desplazamiento panoramico (pan) suave con limites de contorno para fotos ampliadas: navegar por detalles de la imagen con 1 o 2 dedos sin trabas ni perdida de foco tactil.</Cambio>
+                <Cambio tipo="optimizacion">Doble toque inteligente: amplia de forma centrada hacia el punto pulsado a 2.5x y vuelve con fluidez a 1x con el siguiente doble toque.</Cambio>
+                <Cambio tipo="optimizacion">Mapeo de coordenadas OCR en fotos ampliadas: ahora el long-press para copiar claves y contraseñas (ej. routers) funciona con exactitud milimetrica incluso si el usuario ha hecho zoom previo sobre la pegatina.</Cambio>
+                <Cambio tipo="documentacion">Presentacion oficial bilingüe en GitHub (README.md): documentacion estructurada profesional con insignias dinamicas, arquitectura tecnica, caracteristicas clave, historial de versiones y enlaces oficiales del canal FlashChip de WoRFReD.</Cambio>
+            </Cambios>
+        </Version>
     </HistorialVersiones>
 </FlashGallery>
