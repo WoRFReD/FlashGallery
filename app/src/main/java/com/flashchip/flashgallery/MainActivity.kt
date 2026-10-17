@@ -1,4 +1,4 @@
-// Version 1.14 - FlashGallery
+// Version 1.15 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery
@@ -89,6 +89,7 @@ import com.flashchip.flashgallery.ui.components.AboutDialog
 import com.flashchip.flashgallery.ui.components.AppCreditFooter
 import com.flashchip.flashgallery.ui.components.CodeTextViewerDialog
 import com.flashchip.flashgallery.ui.components.ExifBottomSheet
+import com.flashchip.flashgallery.ui.components.OfficeDocViewerDialog
 import com.flashchip.flashgallery.ui.components.OtaUpdateDialog
 import com.flashchip.flashgallery.ui.components.PdfViewerDialog
 import com.flashchip.flashgallery.ui.screens.ApksScreen
@@ -185,9 +186,9 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
 
     val appVersion = remember {
         try {
-            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.14"
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.15"
         } catch (_: Exception) {
-            "1.14"
+            "1.15"
         }
     }
 
@@ -263,6 +264,9 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
     }
     BackHandler(enabled = uiState.activeCodeDoc != null) {
         viewModel.closeCodeViewer()
+    }
+    BackHandler(enabled = uiState.activeOfficeDoc != null) {
+        viewModel.closeOfficeViewer()
     }
     BackHandler(enabled = uiState.activeViewerItem != null) {
         viewModel.openViewer(null)
@@ -677,6 +681,26 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
             onDismiss = { viewModel.closeCodeViewer() },
             onOpenExternal = {
                 viewModel.openDocumentExternal(uiState.activeCodeDoc!!)
+            }
+        )
+    }
+
+    // Visor nativo de documentos de Office (Word, Excel, PowerPoint, ODT, ODS, ODP, RTF, CSV)
+    if (uiState.activeOfficeDoc != null) {
+        OfficeDocViewerDialog(
+            doc = uiState.activeOfficeDoc!!,
+            onDismiss = { viewModel.closeOfficeViewer() },
+            onShare = {
+                val mime = viewModel.getMimeType(uiState.activeOfficeDoc!!.extension)
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = mime
+                    putExtra(Intent.EXTRA_STREAM, uiState.activeOfficeDoc!!.uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(Intent.createChooser(shareIntent, "Compartir documento"))
+            },
+            onOpenExternal = {
+                viewModel.openDocumentExternal(uiState.activeOfficeDoc!!)
             }
         )
     }

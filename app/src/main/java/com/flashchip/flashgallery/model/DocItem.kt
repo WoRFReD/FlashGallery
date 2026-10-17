@@ -11,7 +11,7 @@ enum class DocCategory(val title: String, val extensions: List<String>) {
     PDF("PDF", listOf("pdf")),
     TXT_LOG("TXT / Logs", listOf("txt", "log", "md", "csv", "ini", "conf")),
     CODE_DATA("XML / JSON", listOf("xml", "json", "html", "htm", "css", "js", "yaml", "yml")),
-    OFFICE("Office / Docs", listOf("doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt")),
+    OFFICE("Office / Docs", listOf("doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "rtf")),
     EPUB("EPUB / Libros", listOf("epub", "mobi", "fb2", "cbr", "cbz"))
 }
 

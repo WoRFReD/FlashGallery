@@ -3,12 +3,14 @@
 
 package com.flashchip.flashgallery.data
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.webkit.MimeTypeMap
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.flashchip.flashgallery.model.DocCategory
 import com.flashchip.flashgallery.model.DocItem
@@ -22,7 +24,7 @@ class DocRepository(private val context: Context) {
     private val supportedExtensions = setOf(
         "pdf", "txt", "log", "md", "csv", "ini", "conf",
         "xml", "json", "html", "htm", "css", "js", "yaml", "yml",
-        "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt",
+        "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "rtf",
         "epub", "mobi", "fb2", "cbr", "cbz"
     )
 
@@ -171,10 +173,34 @@ class DocRepository(private val context: Context) {
         return DocCategory.TXT_LOG
     }
 
+    fun getMimeType(extension: String): String {
+        return when (extension.lowercase()) {
+            "pdf" -> "application/pdf"
+            "doc" -> "application/msword"
+            "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            "xls" -> "application/vnd.ms-excel"
+            "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            "ppt" -> "application/vnd.ms-powerpoint"
+            "pptx" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            "odt" -> "application/vnd.oasis.opendocument.text"
+            "ods" -> "application/vnd.oasis.opendocument.spreadsheet"
+            "odp" -> "application/vnd.oasis.opendocument.presentation"
+            "rtf" -> "application/rtf"
+            "csv" -> "text/csv"
+            "txt" -> "text/plain"
+            "log" -> "text/plain"
+            "xml" -> "text/xml"
+            "json" -> "application/json"
+            "html", "htm" -> "text/html"
+            "epub" -> "application/epub+zip"
+            else -> MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.lowercase()) ?: "*/*"
+        }
+    }
+
     fun openDocument(doc: DocItem) {
         try {
             val contentUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", doc.file)
-            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(doc.extension) ?: "*/*"
+            val mimeType = getMimeType(doc.extension)
 
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(contentUri, mimeType)
@@ -182,10 +208,21 @@ class DocRepository(private val context: Context) {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             val chooser = Intent.createChooser(intent, "Abrir con...")
+            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(chooser)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(
+                context,
+                "No hay ninguna aplicación instalada para abrir archivos .${doc.extension.uppercase()}",
+                Toast.LENGTH_LONG
+            ).show()
         } catch (e: Exception) {
-            e.printStackTrace()
+            Toast.makeText(
+                context,
+                "Error al abrir documento: ${e.localizedMessage}",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 

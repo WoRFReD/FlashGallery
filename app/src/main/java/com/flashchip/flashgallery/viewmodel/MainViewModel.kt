@@ -64,6 +64,7 @@ data class MainUiState(
     val isLoadingDocs: Boolean = false,
     val activePdfDoc: DocItem? = null,
     val activeCodeDoc: DocItem? = null,
+    val activeOfficeDoc: DocItem? = null,
 
     // OTA Updates (GitHub Releases)
     val otaReleaseInfo: OtaReleaseInfo? = null,
@@ -430,6 +431,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val ext = doc.extension.lowercase()
         if (ext == "pdf") {
             _uiState.update { it.copy(activePdfDoc = doc) }
+        } else if (isOfficeDoc(ext)) {
+            _uiState.update { it.copy(activeOfficeDoc = doc) }
         } else if (isCodeOrText(ext)) {
             _uiState.update { it.copy(activeCodeDoc = doc) }
         } else {
@@ -445,8 +448,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(activeCodeDoc = null) }
     }
 
+    fun closeOfficeViewer() {
+        _uiState.update { it.copy(activeOfficeDoc = null) }
+    }
+
     fun openDocumentExternal(doc: DocItem) {
         docRepository.openDocument(doc)
+    }
+
+    fun getMimeType(extension: String): String = docRepository.getMimeType(extension)
+
+    private fun isOfficeDoc(ext: String): Boolean {
+        return when (ext) {
+            "docx", "doc", "odt", "rtf",
+            "xlsx", "xls", "ods",
+            "pptx", "ppt", "odp" -> true
+            else -> false
+        }
     }
 
     private fun isCodeOrText(ext: String): Boolean {

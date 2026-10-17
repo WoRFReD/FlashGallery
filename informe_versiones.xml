@@ -190,5 +190,22 @@
                 <Cambio tipo="optimizacion">Reestructuración del scroll horizontal en el visor Notepad++ a nivel de contenedor padre, evitando colisiones de ScrollState en Jetpack Compose y activando ajuste de línea (Word Wrap) por defecto para lectura cómoda en móviles.</Cambio>
             </Cambios>
         </Version>
+
+        <!-- ========================================== -->
+        <!-- Versión 1.15                               -->
+        <!-- ========================================== -->
+        <Version id="1.15" codigo="115">
+            <Fecha>17/10/2026</Fecha>
+            <Titulo>Visor nativo de Office (Word, Excel, PowerPoint) y soporte universal de documentos</Titulo>
+            <Cambios>
+                <Cambio tipo="nueva_funcion">Visor nativo de documentos de Office (OfficeDocViewerDialog): permite abrir y visualizar directamente sin necesidad de apps externas instaladas archivos de Microsoft Word (.docx, .doc, .odt, .rtf), Excel (.xlsx, .ods, .csv, .xls) y PowerPoint (.pptx, .odp, .ppt).</Cambio>
+                <Cambio tipo="nueva_funcion">Motor de análisis ligero de Office (OfficeDocumentParser): descomprime y analiza estructuras XML nativas (WordprocessingML, SpreadsheetML, PresentationML) extrayendo títulos, párrafos formateados, viñetas, tablas y diapositivas de manera instantánea y con 0 MB de librerías pesadas.</Cambio>
+                <Cambio tipo="interfaz">Visualizador de Word con fichas estadísticas (párrafos, palabras aprox., tablas), párrafos con tipografía de lectura clara y tablas integradas.</Cambio>
+                <Cambio tipo="interfaz">Visualizador de Excel con selector de hojas (pestañas), cuadrícula bidireccional 2D interactiva con cabeceras fijadas y celdas alternadas.</Cambio>
+                <Cambio tipo="interfaz">Visualizador de PowerPoint con tarjetas de diapositivas numeradas, títulos destacados y lista de puntos clave.</Cambio>
+                <Cambio tipo="interfaz">Buscador interno de texto con resaltado de coincidencias, botón de copia completa al portapapeles y botón para compartir el documento.</Cambio>
+                <Cambio tipo="correccion">Apertura externa robusta en DocRepository: mapa completo de tipos MIME oficiales para toda la suite de Office, delegación de permisos de lectura por FileProvider y notificación guiada si el dispositivo no tiene ninguna app de Office instalada.</Cambio>
+            </Cambios>
+        </Version>
     </HistorialVersiones>
 </FlashGallery>
