@@ -13,39 +13,44 @@ set "APK_URL=https://github.com/WoRFReD/FlashGallery/releases/latest/download/Fl
 
 echo [1/3] Datos de identidad del Desarrollador:
 echo ----------------------------------------------------
-echo Titular:        WoRFReD (Canal FlashChip)
-echo Paquete:        !PACKAGE!
-echo Enlace APK:     !APK_URL!
-echo Huella SHA-256: !CERT_SHA256!
+echo Titular:        WoRFReD - Canal FlashChip
+echo Paquete:        %PACKAGE%
+echo Enlace APK:     %APK_URL%
+echo Huella SHA-256: %CERT_SHA256%
 echo ----------------------------------------------------
 echo.
 
-if exist "FlashGallery.apk" (
-    echo [2/3] Calculando Hash SHA-256 de FlashGallery.apk...
-    for /f "skip=1 tokens=* delims=" %%A in ('certutil -hashfile FlashGallery.apk SHA256 ^| findstr /v "CertUtil"') do (
+if not exist "FlashGallery.apk" (
+    echo [AVISO] FlashGallery.apk no encontrada en la carpeta.
+    echo Compila primero con actualizar_y_probar.bat.
+    echo.
+    goto :copiar_portapapeles
+)
+
+echo [2/3] Calculando Hash SHA-256 de FlashGallery.apk...
+for /f "skip=1 tokens=*" %%A in ('certutil -hashfile FlashGallery.apk SHA256 ^| findstr /v "CertUtil"') do (
+    if not defined APK_HASH (
         set "APK_HASH=%%A"
         set "APK_HASH=!APK_HASH: =!"
     )
-    echo Hash APK: !APK_HASH!
-    echo.
-) else (
-    echo [2/3] FlashGallery.apk no encontrada. (Compila con actualizar_y_probar.bat primero).
-    echo.
 )
+echo Hash APK: !APK_HASH!
+echo.
 
+:copiar_portapapeles
 echo [3/3] Copiando la huella digital SHA-256 al portapapeles...
-echo !CERT_SHA256!| clip
-echo [OK] Huella copiada al portapapeles.
+<nul set /p "=%CERT_SHA256%" | clip
+echo [OK] Huella SHA-256 copiada al portapapeles con exito.
 echo.
 
 echo ====================================================
-echo INSTRUCCIONES PARA GOOGLE PLAY PROTECT:
-echo 1. Se abrira el formulario oficial de apelaciones de Google.
-echo 2. Pega la huella SHA-256 (ya la tienes en el portapapeles).
-echo 3. Introduce el enlace de descarga de la APK:
-echo    !APK_URL!
-echo 4. En comentarios indica que es una galeria de codigo abierto
-echo    sin malware y 100%% offline.
+echo   INSTRUCCIONES PARA GOOGLE PLAY PROTECT:
+echo   * Se abrira el formulario oficial de apelaciones de Google.
+echo   * Pega la huella SHA-256 con Ctrl+V (ya esta en tu portapapeles).
+echo   * URL de descarga de la APK:
+echo     %APK_URL%
+echo   * En comentarios: Indica que es una app limpia de galeria
+echo     multimedia de codigo abierto y sin malware.
 echo ====================================================
 echo.
 pause
