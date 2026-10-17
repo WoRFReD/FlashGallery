@@ -207,5 +207,20 @@
                 <Cambio tipo="correccion">Apertura externa robusta en DocRepository: mapa completo de tipos MIME oficiales para toda la suite de Office, delegación de permisos de lectura por FileProvider y notificación guiada si el dispositivo no tiene ninguna app de Office instalada.</Cambio>
             </Cambios>
         </Version>
+
+        <!-- ========================================== -->
+        <!-- Versión 1.16                               -->
+        <!-- ========================================== -->
+        <Version id="1.16" codigo="116">
+            <Fecha>17/10/2026</Fecha>
+            <Titulo>Reconocimiento de texto OCR / Live Text con pulsación prolongada en fotos</Titulo>
+            <Cambios>
+                <Cambio tipo="nueva_funcion">Reconocimiento de texto en fotos por pulsación prolongada: al dejar pulsado sobre cualquier texto o caracteres dentro de una foto (pegatinas de router WiFi, números de serie, contraseñas, recibos, etc.), la app localiza con precisión el texto bajo el dedo y abre el panel de selección instantáneo.</Cambio>
+                <Cambio tipo="nueva_funcion">Motor OCR Google ML Kit Text Recognition integrado (100% en dispositivo y sin conexión a internet): detecta bloques de texto, líneas y palabras completas en milisegundos con alta fidelidad.</Cambio>
+                <Cambio tipo="interfaz">Panel interactivo de selección de texto (OcrSelectionSheet): muestra la clave o texto pulsado en tipografía monoespaciada para evitar confusión entre caracteres (0/O, 1/l/I), con botón 'Copiar clave' en un toque y botón 'Compartir'.</Cambio>
+                <Cambio tipo="interfaz">Desglose completo de líneas detectadas: lista individualizada de todos los textos encontrados en la pegatina con botón de copia rápida por cada línea y botones globales para copiar o compartir todo.</Cambio>
+                <Cambio tipo="interfaz">Botón de escaneo OCR directo en la barra superior del visor de fotos para escanear a petición sin necesidad de pulsar sobre la pantalla.</Cambio>
+            </Cambios>
+        </Version>
     </HistorialVersiones>
 </FlashGallery>

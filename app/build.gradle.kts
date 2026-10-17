@@ -14,8 +14,8 @@ android {
         applicationId = "com.flashchip.flashgallery"
         minSdk = 26
         targetSdk = 34
-        versionCode = 115
-        versionName = "1.15"
+        versionCode = 116
+        versionName = "1.16"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -100,8 +100,8 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    // Annotations for JDK17
-    implementation("org.jetbrains:annotations:23.0.0")
+    // Google ML Kit Text Recognition (OCR / Live Text - 100% on-device & offline)
+    implementation("com.google.mlkit:text-recognition:16.0.1")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

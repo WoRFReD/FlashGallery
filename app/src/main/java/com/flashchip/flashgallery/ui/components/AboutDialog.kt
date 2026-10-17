@@ -1,4 +1,4 @@
-// Version 1.15 - FlashGallery
+// Version 1.16 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.ui.components
@@ -121,8 +121,8 @@ fun AboutDialog(
 
                 val appVersion = remember {
                     try {
-                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.15"
-                    } catch (_: Exception) { "1.15" }
+                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.16"
+                    } catch (_: Exception) { "1.16" }
                 }
 
                 Text(

@@ -1,9 +1,10 @@
-// Version 1.07 - FlashGallery
+// Version 1.16 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.ui.screens
 
 import android.content.Intent
+import android.widget.Toast
 import kotlin.OptIn
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,11 +40,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -65,9 +69,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -80,9 +86,12 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.flashchip.flashgallery.data.MediaRepository
-import com.flashchip.flashgallery.model.ExifMetadata
 import com.flashchip.flashgallery.model.MediaItem
+import com.flashchip.flashgallery.model.ExifMetadata
+import com.flashchip.flashgallery.data.OcrScanResult
+import com.flashchip.flashgallery.data.OcrScanner
 import com.flashchip.flashgallery.ui.components.ExifDetailContent
+import com.flashchip.flashgallery.ui.components.OcrSelectionSheet
 import com.flashchip.flashgallery.ui.theme.FlashCyan
 import com.flashchip.flashgallery.ui.theme.FlashRed
 import com.flashchip.flashgallery.ui.theme.SurfaceDark
@@ -116,16 +125,25 @@ fun MediaViewerDialog(
     var showExifSheet by remember { mutableStateOf(false) }
     var activeExifData by remember { mutableStateOf<ExifMetadata?>(null) }
 
+    // Estados para el reconocimiento de texto OCR (Live Text)
+    var isOcrScanning by remember { mutableStateOf(false) }
+    var ocrScanResult by remember { mutableStateOf<OcrScanResult?>(null) }
+    var selectedOcrText by remember { mutableStateOf<String?>(null) }
+    var showOcrSheet by remember { mutableStateOf(false) }
+
     val safeInitialIndex = initialIndex.coerceIn(0, mediaList.size - 1)
     val pagerState = rememberPagerState(initialPage = safeInitialIndex) { mediaList.size }
 
     // Nivel de zoom de la foto actual (1f = tamaño original, >1f = ampliado)
     var currentPhotoScale by remember { mutableFloatStateOf(1f) }
 
-    // Al deslizar a otra página se restablece el zoom y se cierra la info EXIF si estuviera abierta
+    // Al deslizar a otra página se restablece el zoom y se cierran hojas abiertas
     LaunchedEffect(pagerState.currentPage) {
         currentPhotoScale = 1f
         showExifSheet = false
+        showOcrSheet = false
+        ocrScanResult = null
+        selectedOcrText = null
     }
 
     val currentItem = mediaList.getOrNull(pagerState.currentPage) ?: mediaList.first()
@@ -135,9 +153,49 @@ fun MediaViewerDialog(
         sdf.format(currentItem.dateTaken)
     }
 
+    fun triggerOcr(item: MediaItem, touchOffset: Offset?, boxSize: IntSize? = null) {
+        if (item.isVideo) return
+        isOcrScanning = true
+        coroutineScope.launch {
+            try {
+                val result = OcrScanner.recognizeText(context, item.uri)
+                ocrScanResult = result
+
+                var selectedText: String? = null
+                if (touchOffset != null && boxSize != null && boxSize.width > 0 && boxSize.height > 0 && result.imageWidth > 0 && result.imageHeight > 0) {
+                    val scaleFactor = minOf(
+                        boxSize.width.toFloat() / result.imageWidth.toFloat(),
+                        boxSize.height.toFloat() / result.imageHeight.toFloat()
+                    )
+                    val renderedW = result.imageWidth * scaleFactor
+                    val renderedH = result.imageHeight * scaleFactor
+                    val left = (boxSize.width - renderedW) / 2f
+                    val top = (boxSize.height - renderedH) / 2f
+
+                    val imgX = (touchOffset.x - left) / scaleFactor
+                    val imgY = (touchOffset.y - top) / scaleFactor
+                    selectedText = OcrScanner.findElementAt(result, imgX, imgY)
+                }
+
+                if (result.blocks.isEmpty()) {
+                    Toast.makeText(context, "No se detectó ningún texto en esta foto", Toast.LENGTH_SHORT).show()
+                } else {
+                    selectedOcrText = selectedText ?: result.blocks.firstOrNull()?.text
+                    showOcrSheet = true
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error al reconocer texto: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            } finally {
+                isOcrScanning = false
+            }
+        }
+    }
+
     Dialog(
         onDismissRequest = {
-            if (showExifSheet) {
+            if (showOcrSheet) {
+                showOcrSheet = false
+            } else if (showExifSheet) {
                 showExifSheet = false
             } else {
                 onDismiss()
@@ -146,10 +204,13 @@ fun MediaViewerDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         // Manejo del botón atrás de Android dentro del Dialog
+        BackHandler(enabled = showOcrSheet) {
+            showOcrSheet = false
+        }
         BackHandler(enabled = showExifSheet) {
             showExifSheet = false
         }
-        BackHandler(enabled = !showExifSheet) {
+        BackHandler(enabled = !showExifSheet && !showOcrSheet) {
             onDismiss()
         }
 
@@ -184,6 +245,11 @@ fun MediaViewerDialog(
                         PhotoViewerPage(
                             item = item,
                             onTap = { showControls = !showControls },
+                            onLongPress = { touchOffset, boxSize ->
+                                if (page == pagerState.currentPage) {
+                                    triggerOcr(item, touchOffset, boxSize)
+                                }
+                            },
                             onScaleChanged = { scale ->
                                 if (page == pagerState.currentPage) {
                                     currentPhotoScale = scale
@@ -265,6 +331,21 @@ fun MediaViewerDialog(
                             contentDescription = "Compartir",
                             tint = FlashCyan
                         )
+                    }
+
+                    // Botón Reconocer Texto OCR (Live Text)
+                    if (!currentItem.isVideo) {
+                        IconButton(
+                            onClick = {
+                                triggerOcr(currentItem, null, null)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DocumentScanner,
+                                contentDescription = "Escanear texto en la foto",
+                                tint = FlashCyan
+                            )
+                        }
                     }
 
                     // Botón Información EXIF Detallada
@@ -365,6 +446,43 @@ fun MediaViewerDialog(
                     }
                 )
             }
+
+            // Indicador de escaneo OCR
+            if (isOcrScanning) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(SurfaceDark.copy(alpha = 0.92f))
+                        .border(1.dp, FlashCyan.copy(alpha = 0.7f), RoundedCornerShape(16.dp))
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(
+                            color = FlashCyan,
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Detectando caracteres en la foto...",
+                            color = TextPrimary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+
+            // Hoja modal interactiva con los textos detectados y claves copiables
+            if (showOcrSheet && ocrScanResult != null) {
+                OcrSelectionSheet(
+                    scanResult = ocrScanResult!!,
+                    initialSelectedText = selectedOcrText,
+                    onDismiss = { showOcrSheet = false }
+                )
+            }
         }
     }
 }
@@ -380,15 +498,18 @@ fun MediaViewerDialog(
 private fun PhotoViewerPage(
     item: MediaItem,
     onTap: () -> Unit,
+    onLongPress: (Offset, IntSize) -> Unit,
     onScaleChanged: (Float) -> Unit
 ) {
     val context = LocalContext.current
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
+    var boxSize by remember { mutableStateOf(IntSize.Zero) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .onGloballyPositioned { coordinates -> boxSize = coordinates.size }
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { onTap() },
@@ -399,6 +520,9 @@ private fun PhotoViewerPage(
                             offset = Offset.Zero
                         }
                         onScaleChanged(newScale)
+                    },
+                    onLongPress = { touchOffset ->
+                        onLongPress(touchOffset, boxSize)
                     }
                 )
             }
