@@ -1,4 +1,4 @@
-# ⚡ FlashGallery v1.17
+# ⚡ FlashGallery v1.18
 
 [![Release](https://img.shields.io/github/v/release/WoRFReD/FlashGallery?color=00e5ff&label=Release&logo=github)](https://github.com/WoRFReD/FlashGallery/releases/latest)
 [![Android](https://img.shields.io/badge/Android-8.0%2B%20(API%2026%2B)-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
@@ -67,6 +67,7 @@
 
 | Versión | Fecha | Resumen de Cambios |
 | :---: | :---: | :--- |
+| **v1.18** | 17/10/2026 | **Firma Oficial de Desarrollador (Keystore Maestro FlashChip) y accesibilidad con fuentes grandes:** Incorporación de ScrollableTabRow en pestañas superiores y scroll horizontal con `maxLines = 1` en selectores de modo para evitar cortes de texto con fuentes aumentadas. Firma oficial RSA 4096-bit con validez de 30 años a nombre de WoRFReD / FlashChip, guía oficial de firma y asistente de Play Protect. |
 | **v1.17** | 17/10/2026 | **Zoom táctil ultrafluido:** Reescritura del motor de gestos multitáctiles (pinch-to-zoom continuo de 1x a 5x, desplazamiento panorámico con límites y doble toque con centrado al punto pulsado). Mapeo de coordenadas OCR en fotos ampliadas y presentación oficial en GitHub. |
 | **v1.16** | 17/10/2026 | **OCR / Live Text en fotos:** Reconocimiento offline con Google ML Kit, pulsación prolongada sobre textos/pegatinas de router para copiar contraseñas, panel interactivo y botón de escaneo directo. |
 | **v1.15** | 17/10/2026 | **Soporte Office Universal:** Visor nativo para Word (.docx, .doc), Excel (.xlsx, .csv con cuadrícula 2D) y PowerPoint (.pptx). |

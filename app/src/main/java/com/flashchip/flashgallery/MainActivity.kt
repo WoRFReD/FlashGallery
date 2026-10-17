@@ -61,6 +61,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
@@ -409,17 +410,21 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
                 }
 
                 // Top Navigation Tabs (Pestaña 1: Fotos, Pestaña 2: APKs, Pestaña 3: Documentos)
-                TabRow(
+                ScrollableTabRow(
                     selectedTabIndex = uiState.currentTab,
                     containerColor = SurfaceDark,
                     contentColor = FlashCyan,
+                    edgePadding = 8.dp,
                     indicator = { tabPositions ->
-                        TabRowDefaults.SecondaryIndicator(
-                            modifier = Modifier.tabIndicatorOffset(tabPositions[uiState.currentTab]),
-                            color = FlashCyan,
-                            height = 3.dp
-                        )
-                    }
+                        if (uiState.currentTab < tabPositions.size) {
+                            TabRowDefaults.SecondaryIndicator(
+                                modifier = Modifier.tabIndicatorOffset(tabPositions[uiState.currentTab]),
+                                color = FlashCyan,
+                                height = 3.dp
+                            )
+                        }
+                    },
+                    divider = {}
                 ) {
                     Tab(
                         selected = uiState.currentTab == 0,
@@ -428,7 +433,9 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
                             Text(
                                 text = "Fotos y Vídeos",
                                 fontWeight = if (uiState.currentTab == 0) FontWeight.Bold else FontWeight.Medium,
-                                fontSize = 13.sp
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         },
                         icon = {
@@ -449,7 +456,9 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
                             Text(
                                 text = "APKs",
                                 fontWeight = if (uiState.currentTab == 1) FontWeight.Bold else FontWeight.Medium,
-                                fontSize = 13.sp
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         },
                         icon = {
@@ -470,7 +479,9 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
                             Text(
                                 text = "Documentos",
                                 fontWeight = if (uiState.currentTab == 2) FontWeight.Bold else FontWeight.Medium,
-                                fontSize = 13.sp
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         },
                         icon = {

@@ -14,8 +14,8 @@ android {
         applicationId = "com.flashchip.flashgallery"
         minSdk = 26
         targetSdk = 34
-        versionCode = 117
-        versionName = "1.17"
+        versionCode = 118
+        versionName = "1.18"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -25,10 +25,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = rootProject.file("flashgallery-release.jks")
-            storePassword = "flashgallerypass"
-            keyAlias = "flashgallery"
-            keyPassword = "flashgallerypass"
+            storeFile = rootProject.file("flashchip-master.jks")
+            storePassword = "flashchippass"
+            keyAlias = "flashchip"
+            keyPassword = "flashchippass"
             enableV1Signing = true
             enableV2Signing = true
         }

@@ -14,6 +14,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -131,11 +133,23 @@ fun PhotosScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     FilterChip(
                         selected = photoViewMode == 0,
                         onClick = { onViewModeChange(0) },
-                        label = { Text("Línea de tiempo") },
+                        label = {
+                            Text(
+                                text = "Línea de tiempo",
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                        },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.PhotoLibrary,
@@ -161,7 +175,13 @@ fun PhotosScreen(
                     FilterChip(
                         selected = photoViewMode == 1,
                         onClick = { onViewModeChange(1) },
-                        label = { Text("De tus apps") },
+                        label = {
+                            Text(
+                                text = "De tus apps",
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                        },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Apps,
@@ -184,6 +204,8 @@ fun PhotosScreen(
                         )
                     )
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Density column toggle button (3 vs 5 columns)
                 if (photoViewMode == 0) {

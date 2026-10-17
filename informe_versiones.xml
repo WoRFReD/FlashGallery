@@ -236,5 +236,18 @@
                 <Cambio tipo="documentacion">Presentacion oficial bilingüe en GitHub (README.md): documentacion estructurada profesional con insignias dinamicas, arquitectura tecnica, caracteristicas clave, historial de versiones y enlaces oficiales del canal FlashChip de WoRFReD.</Cambio>
             </Cambios>
         </Version>
+        <!-- ========================================== -->
+        <!-- Versión 1.18                               -->
+        <!-- ========================================== -->
+        <Version id="1.18" codigo="118">
+            <Fecha>17/10/2026</Fecha>
+            <Titulo>Firma Oficial de Desarrollador FlashChip (Keystore Maestro) y adaptabilidad con fuentes grandes</Titulo>
+            <Cambios>
+                <Cambio tipo="interfaz">Adaptabilidad completa para fuentes grandes (accesibilidad): pestañas superiores convertidas en ScrollableTabRow y botones de modo ('Línea de tiempo' / 'De tus apps') con desplazamiento horizontal suave y protección contra salto de línea (maxLines = 1), eliminando cualquier corte de palabras como 'Document-os'.</Cambio>
+                <Cambio tipo="seguridad">Certificado Maestro Oficial de Desarrollador (flashchip-master.jks): par de claves RSA 4096-bit con validez de 30 años (hasta 2056) emitido a nombre de WoRFReD / FlashChip para acumular reputación y confianza ante Google Play Protect.</Cambio>
+                <Cambio tipo="documentacion">Guía Oficial de Firma para Futuros Proyectos (GUIA_FIRMA_FLASHCHIP.md): manual detallado con credenciales, huellas SHA-256/SHA-1 y ejemplos de configuración en Gradle (Kotlin DSL y Groovy) para reutilizar esta misma firma en cualquier nueva app.</Cambio>
+                <Cambio tipo="herramienta">Asistente automatizado de verificación (verificar_play_protect.bat): script para calcular hashes de la APK, copiar la huella SHA-256 al portapapeles y enlazar al formulario oficial de lista blanca de Google Play Protect.</Cambio>
+            </Cambios>
+        </Version>
     </HistorialVersiones>
 </FlashGallery>
