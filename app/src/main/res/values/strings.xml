@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Version 1.01 - FlashGallery -->
+<!-- Developed for FlashChip by WoRFReD -->
+<resources>
+    <string name="app_name">FlashGallery</string>
+    <string name="app_version">1.01</string>
+    <string name="author">by WoRFReD</string>
+    <string name="channel_name">FlashChip</string>
+    <string name="channel_url">https://youtube.com/@flashchiped</string>
+</resources>

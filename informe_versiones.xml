@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FlashGallery>
+    <Proyecto>
+        <Nombre>FlashGallery</Nombre>
+        <Descripcion>Galería multimedia ultrarrápida para Android (Fotos, Vídeos, APKs y Documentos) con tema Cyberpunk oscuro</Descripcion>
+        <Autor>WoRFReD</Autor>
+        <Canal>FlashChip</Canal>
+        <FechaCreacion>Octubre 2026</FechaCreacion>
+        <VersionActual>1.12</VersionActual>
+        <VersionCodeActual>112</VersionCodeActual>
+        <UbicacionProyecto>C:\APPs_Atigravity\FlashGallery_APK</UbicacionProyecto>
+    </Proyecto>
+
+    <HistorialVersiones>
+        <!-- ========================================== -->
+        <!-- Versión 1.01                               -->
+        <!-- ========================================== -->
+        <Version id="1.01" codigo="101">
+            <Fecha>14/10/2026</Fecha>
+            <Titulo>Creación inicial, compilación y estructura base</Titulo>
+            <Cambios>
+                <Cambio tipo="optimizacion">Migración de ruta de disco Z: a C: para acelerar los tiempos de compilación de Gradle.</Cambio>
+                <Cambio tipo="correccion">Corrección de errores Kotlin/Compose: MutableSetOf, Box import, derivedStateFlow y sobrecarga de funciones Text.</Cambio>
+                <Cambio tipo="nueva_funcion">Implementación de 3 pestañas principales: Fotos y Vídeos, APKs del dispositivo y Documentos.</Cambio>
+                <Cambio tipo="interfaz">Tema Cyberpunk oscuro (BgDark, SurfaceDark, FlashCyan, FlashAmber, TextPrimary).</Cambio>
+                <Cambio tipo="nueva_funcion">Identificación y agrupación de fotos por aplicación de origen (WhatsApp, Cámara, Telegram, etc.).</Cambio>
+            </Cambios>
+        </Version>
+
+        <!-- ========================================== -->
+        <!-- Versión 1.02                               -->
+        <!-- ========================================== -->
+        <Version id="1.02" codigo="102">
+            <Fecha>15/10/2026</Fecha>
+            <Titulo>Permisos de almacenamiento en Android 11+ para APKs y Documentos</Titulo>
+            <Cambios>
+                <Cambio tipo="correccion">Solución al problema de pestañas de APKs y Documentos vacías por restricciones de permisos en Android 11 o superior.</Cambio>
+                <Cambio tipo="nueva_funcion">Añadida solicitud de permiso especial MANAGE_EXTERNAL_STORAGE (Acceso a todos los archivos) con comprobación dinámica y redirección automática a Ajustes si no está concedido.</Cambio>
+                <Cambio tipo="nueva_funcion">Escaneo recursivo optimizado de almacenamiento para instalación de APKs y lectura de PDF, Word, Excel, etc.</Cambio>
+            </Cambios>
+        </Version>
+
+        <!-- ========================================== -->
+        <!-- Versión 1.03                               -->
+        <!-- ========================================== -->
+        <Version id="1.03" codigo="103">
+            <Fecha>16/10/2026</Fecha>
+            <Titulo>Carga instantánea de fotos y línea de tiempo por meses</Titulo>
+            <Cambios>
+                <Cambio tipo="optimizacion">Sistema de carga progresiva ultrarrápida: el primer lote de miniaturas (60 fotos) se muestra en menos de 30 milisegundos sin congelar la app.</Cambio>
+                <Cambio tipo="interfaz">Sustitución de la burbuja flotante de fecha por separadores temporales fijos por meses (ej. "Octubre 2026", "Septiembre 2026").</Cambio>
+                <Cambio tipo="optimizacion">Eliminación de indicadores circulares de carga bloqueantes en la pestaña de fotos para experiencia instantánea.</Cambio>
+            </Cambios>
+        </Version>
+
+        <!-- ========================================== -->
+        <!-- Versión 1.04                               -->
+        <!-- ========================================== -->
+        <Version id="1.04" codigo="104">
+            <Fecha>16/10/2026</Fecha>
+            <Titulo>Visor a pantalla completa con paginador horizontal</Titulo>
+            <Cambios>
+                <Cambio tipo="nueva_funcion">Implementación de visor a pantalla completa (MediaViewerDialog) para fotos y reproducción de vídeos.</Cambio>
+                <Cambio tipo="nueva_funcion">Integración de HorizontalPager de Jetpack Compose para navegar entre fotos anteriores y siguientes en el visor.</Cambio>
+                <Cambio tipo="interfaz">Cabecera fijada (Sticky Header) de mes en la línea de tiempo que permanece anclada al hacer scroll.</Cambio>
+            </Cambios>
+        </Version>
+
+        <!-- ========================================== -->
+        <!-- Versión 1.05                               -->
+        <!-- ========================================== -->
+        <Version id="1.05" codigo="105">
+            <Fecha>16/10/2026</Fecha>
+            <Titulo>Navegación gestual táctil pura y limpieza de interfaz</Titulo>
+            <Cambios>
+                <Cambio tipo="interfaz">Eliminación de flechas físicas en los bordes del visor a pantalla completa.</Cambio>
+                <Cambio tipo="nueva_funcion">Control 100% gestual deslizando el dedo (swipe) hacia la izquierda o derecha para pasar de foto.</Cambio>
+                <Cambio tipo="interfaz">Eliminación del pie de página redundante ("by WoRFReD"), centralizándolo con estilo en la barra superior.</Cambio>
+            </Cambios>
+        </Version>
+
+        <!-- ========================================== -->
+        <!-- Versión 1.06                               -->
+        <!-- ========================================== -->
+        <Version id="1.06" codigo="106">
+            <Fecha>16/10/2026</Fecha>
+            <Titulo>Desbloqueo de gestos en visor, hoja EXIF detallada y gestión de botón Atrás</Titulo>
+            <Cambios>
+                <Cambio tipo="correccion">Desbloqueo de gestos de deslizamiento en HorizontalPager: desactivación de detectTransformGestures a zoom 1x para que no intercepte el cambio de foto.</Cambio>
+                <Cambio tipo="correccion">Corrección del botón 'i' de información EXIF: integrada directamente en el visor para evitar conflictos de ventana (WindowManager) en Android.</Cambio>
+                <Cambio tipo="nueva_funcion">Ficha técnica detallada EXIF: muestra resolución, cámara, apertura (f-number), velocidad de obturación, ISO, distancia focal, fecha exacta, tamaño y GPS.</Cambio>
+                <Cambio tipo="correccion">Control total del botón físico/gestual Atrás del móvil (BackHandler) para retroceder vistas o cerrar visores sin minimizar la aplicación.</Cambio>
+            </Cambios>
+        </Version>
+
+        <!-- ========================================== -->
+        <!-- Versión 1.07                               -->
+        <!-- ========================================== -->
+        <Version id="1.07" codigo="107">
+            <Fecha>16/10/2026</Fecha>
+            <Titulo>Modo Selección Múltiple y ajuste de sensibilidad de deslizamiento</Titulo>
+            <Cambios>
+                <Cambio tipo="nueva_funcion">Modo selección por pulsación larga (long press) en cualquier foto o vídeo para seleccionar varios elementos.</Cambio>
+                <Cambio tipo="nueva_funcion">Barra contextual de acciones: contador de seleccionados, seleccionar todo, mover a otra carpeta y eliminación masiva con confirmación.</Cambio>
+                <Cambio tipo="optimizacion">Ajuste de sensibilidad del visor táctil (snapPositionalThreshold = 0.15f) para cambiar de foto con un deslizamiento de dedo más corto y suave.</Cambio>
+            </Cambios>
+        </Version>
+
+        <!-- ========================================== -->
+        <!-- Versión 1.08                               -->
+        <!-- ========================================== -->
+        <Version id="1.08" codigo="108">
+            <Fecha>17/10/2026</Fecha>
+            <Titulo>Selector interactivo de salto rápido a Mes y Año</Titulo>
+            <Cambios>
+                <Cambio tipo="nueva_funcion">Al pulsar la cabecera fija del mes en la parte superior ("Octubre 2026 ▾"), se abre un diálogo interactivo para saltar de fecha en el tiempo.</Cambio>
+                <Cambio tipo="interfaz">Selector de años mediante chips horizontales filtrando solo los años que contienen fotos reales.</Cambio>
+                <Cambio tipo="interfaz">Cuadrícula de meses disponibles para el año seleccionado, indicando cantidad de fotos/vídeos y resaltando el mes actual.</Cambio>
+                <Cambio tipo="nueva_funcion">Botón de acceso rápido "Ir al principio (Más recientes)" y salto instantáneo (scrollToItem) sin tirones.</Cambio>
+            </Cambios>
+        </Version>
+
+        <!-- ========================================== -->
+        <!-- Versión 1.09                               -->
+        <!-- ========================================== -->
+        <Version id="1.09" codigo="109">
+            <Fecha>17/10/2026</Fecha>
+            <Titulo>Eliminación de cabecera duplicada y separador de meses minimalista</Titulo>
+            <Cambios>
+                <Cambio tipo="correccion">Eliminado el encabezado duplicado al inicio: el primer mes ya no dibuja una segunda barra debajo de la barra sticky fija.</Cambio>
+                <Cambio tipo="interfaz">Rediseño del separador de meses dentro del scroll a formato minimalista ("solo letras"): línea sutil, tipografía limpia ("Septiembre 2026 • 24 elem.") y enlace discreto de texto para seleccionar.</Cambio>
+            </Cambios>
+        </Version>
+
+        <!-- ========================================== -->
+        <!-- Versión 1.10                               -->
+        <!-- ========================================== -->
+        <Version id="1.10" codigo="110">
+            <Fecha>17/10/2026</Fecha>
+            <Titulo>Visor nativo de PDF y Visor de código estilo Notepad++ con coloreado de sintaxis</Titulo>
+            <Cambios>
+                <Cambio tipo="nueva_funcion">Visor nativo de documentos PDF (PdfViewerDialog): renderizado de páginas de alta resolución mediante PdfRenderer de Android, paginador con slider, gestos táctiles de zoom y desplazamiento (pan) y botón para compartir o abrir en visor externo.</Cambio>
+                <Cambio tipo="nueva_funcion">Visor de código y texto estilo Notepad++ (CodeTextViewerDialog): visualizador profesional para archivos XML, JSON, HTML, TXT, LOG, INI, scripts y código fuente.</Cambio>
+                <Cambio tipo="interfaz">Motor de coloreado de sintaxis (SyntaxHighlighter): etiquetas en FlashCyan, atributos en celeste/ámbar, cadenas en coral/naranja, comentarios de bloque y línea en verde Notepad++ (itálica), y palabras clave en morado.</Cambio>
+                <Cambio tipo="interfaz">Columna lateral de números de línea (Gutter) estilo Notepad++ sincronizada con el scroll vertical de alto rendimiento (LazyColumn).</Cambio>
+                <Cambio tipo="nueva_funcion">Buscador integrado en archivos de texto: localizador de palabras clave con contador de coincidencias y botones arriba/abajo para navegar entre líneas coincidentes.</Cambio>
+                <Cambio tipo="nueva_funcion">Conmutador de ajuste de línea (Word Wrap) para alternar entre desplazamiento horizontal sin cortes y salto de línea automático.</Cambio>
+                <Cambio tipo="nueva_funcion">Botón de copia rápida de todo el documento al portapapeles y botón para abrir en editor externo si se desea modificar.</Cambio>
+            </Cambios>
+        </Version>
+
+        <!-- ========================================== -->
+        <!-- Versión 1.11                               -->
+        <!-- ========================================== -->
+        <Version id="1.11" codigo="111">
+            <Fecha>17/10/2026</Fecha>
+            <Titulo>Actualizaciones OTA desde GitHub, diálogo de actualización y publicación automatizada</Titulo>
+            <Cambios>
+                <Cambio tipo="nueva_funcion">Sistema de comprobación de actualizaciones OTA desde GitHub Releases: comprueba automáticamente o a petición si existe una nueva versión comparando Semantic Versioning (vX.YY).</Cambio>
+                <Cambio tipo="interfaz">Diálogo de actualización OTA (OtaUpdateDialog) estilo Cyberpunk: muestra notas de versión (changelog), tamaño, botón de descarga con barra de progreso porcentual y botón para instalar.</Cambio>
+                <Cambio tipo="nueva_funcion">Descarga interna de APK en caché segura e instalación directa mediante FileProvider e Intent de PackageInstaller de Android.</Cambio>
+                <Cambio tipo="interfaz">Botón interactivo en el diálogo "Acerca de" (AboutDialog) para buscar actualizaciones OTA manualmente con respuesta instantánea.</Cambio>
+                <Cambio tipo="herramientas">Script autónomo actualizar_y_probar.bat mejorado: integra GitHub CLI (gh) y MinGit portables en SDK_Gradle, autodetecta sesión de GitHub o inicia login guiado, gestiona repositorio remoto origin, compila, prueba por ADB y publica releases oficiales en GitHub con FlashGallery.apk adjunto.</Cambio>
+            </Cambios>
+        </Version>
+
+        <!-- ========================================== -->
+        <!-- Versión 1.12                               -->
+        <!-- ========================================== -->
+        <Version id="1.12" codigo="112">
+            <Fecha>17/10/2026</Fecha>
+            <Titulo>Publicación de Release OTA en GitHub y prueba de actualización remota</Titulo>
+            <Cambios>
+                <Cambio tipo="nueva_funcion">Versión 1.12 publicada oficialmente como release en GitHub con el binario FlashGallery.apk adjunto.</Cambio>
+                <Cambio tipo="optimizacion">Verificación del flujo OTA en vivo: detección de salto de versión desde v1.11 a v1.12, descarga progresiva e instalación desatendida.</Cambio>
+                <Cambio tipo="herramientas">Automatización del push a origin main y creación remota de release con GitHub CLI.</Cambio>
+            </Cambios>
+        </Version>
+    </HistorialVersiones>
+</FlashGallery>

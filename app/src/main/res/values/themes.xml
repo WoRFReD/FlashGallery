@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Version 1.01 - FlashGallery -->
+<!-- Developed for FlashChip by WoRFReD -->
+<resources>
+    <style name="Theme.FlashGallery" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#0F172A</item>
+        <item name="android:navigationBarColor">#0F172A</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

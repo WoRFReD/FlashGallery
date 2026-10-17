@@ -1,0 +1,204 @@
+Quiero hacer con antigravity una galería de fotos definitiva apk para Android, que siempre a todas les falta algo... Lo primero, que crees que tú que deberá llevar? Por ejemplo la carpeta all debe estar... Pero luego lo quiero enfocar de otra manera... He visto esta manera de enfocarlo y me parece de lujo... Por apps.. mira las fotos luego también quiero variar pestañas arriba... Fotos, app, documentos... Por ejemplo en fotos lo que hemos hablado... En apps que aparezca las apps que tengo descargada .apk y en documentos que aparezca pues todo... Los txt PDF, XML.... Ya sabes.... Que vas opinando?
+
+La idea de enfocar la galería con filtros por aplicación de origen (como se ve en la captura con el icono superpuesto) es de lo más útil que se puede implementar. En Android el almacenamiento suele ser un caos: unas apps guardan en DCIM, otras en Pictures y las de mensajería en Android/media/, por lo que asignar automáticamente el icono y nombre del paquete a cada carpeta resuelve de un plumazo la desorganización habitual.
+
+Convertir la herramienta en un centro de medios rápido (Fotos, APKs y Documentos) tiene todo el sentido del mundo, porque evita tener que alternar constantemente entre la galería convencional y un explorador de archivos pesado.
+
+Para que de verdad sea la galería definitiva y no se quede a medio camino, esta estructura encajaría a la perfección:
+
+1. Pestaña Fotos (Multimedia)
+
+Línea de tiempo "Todo": Un scroll infinito ordenado cronológicamente por fecha de captura real (leyendo metadatos EXIF, no solo la fecha del archivo).
+
+Vista "Por Apps": Tal como tienes en la captura, agrupando por la app responsable con su insignia distintiva (WhatsApp, Cámara, Discord, navegadores, etc.).
+
+Filtros rápidos flotantes: Botones rápidos para aislar Capturas de pantalla, Vídeos o Favoritos.
+
+Visor interno completo: Zoom nativo fluido, reproductor de vídeo ligero integrado y una tarjeta deslizable con los datos EXIF detallados (peso, resolución, cámara y ubicación si existe).
+
+2. Pestaña APKs (Gestor de descargas)
+
+Lectura inteligente del paquete: Que no muestre solo el nombre plano del archivo .apk, sino que el sistema analice el paquete para pintar el icono real de la app, el nombre legible (label), la versión y el peso.
+
+Acción rápida de instalación y limpieza: Botón directo para lanzar el instalador del paquete y, justo después de instalar, un aviso opcional: "¿Quieres eliminar el APK para liberar espacio?".
+
+3. Pestaña Documentos
+
+Filtro por chips superiores: Píldoras para alternar al instante entre Todos, PDF, TXT / Logs, XML / JSON, Office / EPUB.
+
+Búsqueda por texto en tiempo real: Para no tener que bucear por carpetas infinitas cuando buscas un archivo concreto.
+
+4. Detalles clave que marcan la diferencia
+
+Papelera de reciclaje local: Un margen de seguridad antes de borrar archivos de forma permanente.
+
+Rendimiento mediante MediaStore: Para que la app vuele con 20.000 archivos, la indexación debe basarse en el MediaStore de Android y un sistema de caché de miniaturas eficiente (como Coil o Glide), cargando imágenes bajo demanda para no saturar la memoria RAM.
+
+Detector de archivos duplicados: Un escaneo rápido por tamaño y hash para limpiar imágenes repetidas o memes repetidos de grupos.
+
+¿Prefieres que planteemos la base del proyecto en Kotlin nativo para exprimir al máximo el rendimiento del sistema y permisos de almacenamiento, o tienes en mente montarlo como PWA empaquetada?
+
+Si si quiero que sea una app apk nativa, no una pwa. Y todo lo que dices me parece bien, pero solo un detalle, en scroll infinito me parece bien, pero una separación de mes, te parece bien?
+
+Separar por meses no solo me parece bien, sino que es imprescindible. Un scroll infinito continuo sin referencias temporales se convierte en un laberinto en cuanto tienes más de mil fotos en el carrete.
+
+Para que esa separación por meses quede impecable a nivel visual y de usabilidad, estos detalles marcan la diferencia:
+
+1. Cabeceras con contexto
+Título claro: Cabecera con el mes y año (por ejemplo, Octubre 2026).
+
+Contador de elementos: Un texto secundario a la derecha que indique el volumen del mes (ej. «142 fotos, 8 vídeos»).
+
+Selección rápida por mes: Un botón o casilla sutil en la cabecera que permita seleccionar de golpe todas las fotos de ese mes (muy útil para compartir lotes o hacer limpieza).
+
+2. Scroll lateral rápido con burbuja flotante (Fast Scroll)
+Si tienes fotos desde hace varios años, deslizar el dedo hacia arriba lleva una eternidad. Añadir una barra de desplazamiento rápido a la derecha que, al arrastrarse, muestre una burbuja flotante con el mes y año actual te permite saltar a cualquier punto de la galería en menos de un segundo.
+
+3. Gesto de pellizco (Pinch-to-zoom) en la cuadrícula
+Poder alternar con dos dedos la densidad de la cuadrícula:
+
+Vista compacta: 5 o 6 columnas para ver el mes de un solo vistazo.
+
+Vista detallada: 3 columnas para apreciar bien las miniaturas.
+
+Cómo implementarlo en Android nativo (Kotlin)
+Para lograr un rendimiento fluido a 60/120 fps sin tirones al procesar miles de registros:
+
+Agrupación eficiente en memoria:
+Al consultar MediaStore.Images.Media, se extrae el timestamp DATE_TAKEN (o DATE_ADDED en su defecto) y se transforma en objetos YearMonth. Los datos se aplanan en una lista de una clase sellada:
+
+Kotlin
+sealed class GalleryItem {
+    data class MonthHeader(val yearMonth: YearMonth, val count: Int) : GalleryItem()
+    data class Media(val id: Long, val uri: Uri, val isVideo: Boolean) : GalleryItem()
+}
+Renderizado de la cuadrícula:
+
+Con Jetpack Compose: Usando LazyVerticalGrid, indicando que los MonthHeader ocupen todo el ancho:
+
+Kotlin
+item(span = { GridItemSpan(maxLineSpan) }) {
+    MonthHeaderView(item)
+}
+Con RecyclerView tradicional: Usando un GridLayoutManager y configurando SpanSizeLookup para que las cabeceras tomen el ancho completo (spanCount) y las fotos ocupen 1 columna.
+
+Carga de imágenes:
+Utilizar Coil o Glide configurado para pedir solo las miniaturas generadas por el propio sistema (MediaStore.Images.Thumbnails / ContentResolver.loadThumbnail), lo que evita decodificar los archivos originales de alta resolución hasta que no se abre la vista individual.
+
+Si te encaja este enfoque, podemos arrancar la estructura del proyecto en la versión 1.01. ¿Tienes preferencia por maquetar la interfaz con Jetpack Compose o con el sistema clásico de XML + RecyclerView?
+
+Lo último que me preguntas no tengo ni idea. Hazlo con lo más eficiente, entonces.. haz un promp super detallado para antigravity
+
+Copia y pega este prompt directamente en Antigravity para iniciar el proyecto con la arquitectura y la versión base configuradas:
+
+Markdown
+Actúa como un desarrollador sénior de Android especializado en Kotlin y Jetpack Compose. Vamos a crear desde cero una aplicación nativa de galería y gestor de medios definitivo, enfocada en ultra rendimiento, diseño Material 3 moderno y organización inteligente.
+
+### REGLAS OBLIGATORIAS DEL PROYECTO
+1. Versión del proyecto: Empieza estrictamente en la Versión 1.01. En cada iteración o respuesta futura, deberás incrementar el número de versión (ejemplo: 1.01 -> 1.02).
+2. Pie de página y Créditos: En la pantalla de ajustes/información (o pie de navegación principal de la app), incluye siempre:
+   - Firma: "by WoRFReD"
+   - Debajo: "Canal: FlashChip" hipervinculado a "https://youtube.com/@flashchiped"
+3. Formato de entrega de código: 
+   - Proporciona siempre el archivo modificado COMPLETO para que solo sea necesario reemplazar el archivo viejo por el nuevo.
+   - Si un archivo es excesivamente largo, usa el formato:
+     "Busca esto en el código viejo:" [código]
+     "Cámbialo por esto nuevo:" [código]
+
+---
+
+### STACK TECNOLÓGICO Y RENDIMIENTO
+- Lenguaje: Kotlin.
+- UI: Jetpack Compose con Material 3 (soporte para tema dinámico / modo oscuro).
+- Carga y caché de imágenes: Coil (utilizando miniaturas nativas de MediaStore para evitar desbordamientos de memoria RAM).
+- Arquitectura: MVVM + Coroutines / StateFlow.
+- Acceso a datos: ContentResolver + MediaStore API para multimedia rápida y Storage Access Framework / File APIs para APKs y documentos.
+
+---
+
+### ESTRUCTURA DE LA APP Y PESTAÑAS SUPERIORES
+
+Diseña una barra de navegación superior con tres pestañas principales:
+
+#### Pestaña 1: Fotos y Vídeos
+- Dos modos de visualización accesibles mediante selector o chips:
+  1. Línea de tiempo "Todo":
+     - Scroll infinito optimizado con `LazyVerticalGrid`.
+     - Separación y agrupación cronológica obligatoria por Mes y Año (ej. "Octubre 2026").
+     - Cabecera de mes con ancho completo (`maxLineSpan`), contador de elementos (ej. "150 fotos, 12 vídeos") y botón de selección en lote.
+     - Fast Scroll lateral con indicador/burbuja flotante de fecha.
+  2. Vista "De tus apps":
+     - Agrupación por carpetas de origen asociadas a aplicaciones instaladas (WhatsApp, Cámara, Telegram, Discord, etc.).
+     - Cada tarjeta muestra la miniatura más reciente con el icono real de la app superpuesto en la esquina inferior derecha y el nombre de la app.
+- Visor a pantalla completa: Gestos de zoom/pan nativos, reproductor integrado para vídeos y hoja inferior deslizable con datos EXIF (fecha, peso, resolución, modelo de cámara).
+
+#### Pestaña 2: APKs (Gestor de descargas)
+- Escaneo rápido de archivos con extensión `.apk` en el almacenamiento local.
+- Extracción de metadatos en segundo plano usando `PackageManager.getPackageArchiveInfo`:
+  - Icono real embebido en el APK.
+  - Nombre legible de la aplicación (`applicationInfo.loadLabel`).
+  - Nombre del paquete, versión (`versionName` y `versionCode`) y tamaño en MB.
+- Acción de instalación directa mediante `Intent.ACTION_VIEW` con `FileProvider`.
+- Diálogo post-instalación para ofrecer la eliminación rápida del APK y liberar espacio.
+
+#### Pestaña 3: Documentos
+- Escaneo y categorización de archivos: PDF, TXT, XML, JSON, LOG, DOCX, EPUB.
+- Fila superior de chips de filtrado rápido por extensión / tipo de archivo.
+- Barra de búsqueda predictiva en tiempo real por nombre de archivo.
+- Apertura directa del documento con el visor predeterminado del sistema mediante `FileProvider`.
+
+---
+
+### GESTIÓN DE PERMISOS Y MANIFIESTO
+Configura adecuadamente `AndroidManifest.xml` con soporte para Android 13+ (API 33+) y versiones anteriores:
+- `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO`.
+- Permiso para leer almacenamiento/documentos (`READ_EXTERNAL_STORAGE` / `MANAGE_EXTERNAL_STORAGE` o `ACTION_OPEN_DOCUMENT_TREE` según compatibilidad).
+- `REQUEST_INSTALL_PACKAGES` para la instalación de APKs descargados.
+- Declaración de `androidx.core.content.FileProvider` y su respectivo `res/xml/file_paths.xml`.
+
+---
+
+### PRIMERA ENTREGA (v1.01)
+Genera la base del proyecto:
+1. `build.gradle.kts` (app y proyecto) con las dependencias requeridas (Compose, Coil, Coroutines, Material3).
+2. `AndroidManifest.xml` configurado con permisos y FileProvider.
+3. El modelo de datos base (`GalleryItem`, `ApkItem`, `DocItem`) y el `MainActivity.kt` con la estructura de pestañas funcionales y la pantalla de créditos/footer.
+Una última cosa... Que nombre de te ocurre que le podemos dar a esta APK?
+
+Aquí tienes varias propuestas ordenadas según el estilo que mejor encaje con la identidad de la app:
+
+1. Guiño a tu canal y velocidad (Rápido y personal)
+FlashMedia o FlashGallery: Muy directo, suena a app ligera que no se traba ni con 20.000 fotos y hace un guiño natural a FlashChip.
+
+VoltGallery: Da sensación de respuesta instantánea y potencia técnica.
+
+2. Concepto «Todo en Uno» (Fotos + APKs + Documentos)
+OmniGallery (o OmniMedia): Omni significa «todo». Refleja a la perfección que no es solo un visor de fotos, sino la navaja suiza de medios del teléfono.
+
+NexusMedia: El punto de unión donde convergen tus fotos agrupadas por apps, tus instaladores y tus documentos.
+
+TrioHub: Hace referencia limpia a las 3 pestañas principales de la app.
+
+3. La opción «Galería Definitiva» (Elegante y moderna)
+ApexGallery: Apex representa la cima o el punto más alto; encaja genial con la premisa de ser la galería definitiva que tiene lo que a las demás les falta.
+
+HyperGallery: Nombre contundente, con sonido limpio y estética muy Material 3.
+
+4. Centrado en su función estrella (Agrupar por origen)
+OriginGallery: Destaca su punto más diferenciador frente a Google Fotos o la galería estándar: ordenar el caos mostrando claramente de qué app procede cada archivo.
+
+Si buscas algo con identidad y marca propia, FlashMedia queda perfecta; si prefieres que suene a herramienta definitiva de sistema, OmniGallery o ApexGallery definen exactamente lo que estás construyendo.
+
+Me gusta flashgalery y lo he buscado en play store y no aparece, osea está libre
+
+¡Es un nombre perfecto! Tiene gancho, suena rápido, encaja de lleno con la identidad de FlashChip y que no esté pillado en Google Play es una gran ventaja si más adelante decides publicarla.
+
+Un par de detalles clave antes de fijarlo en el código:
+
+Ortografía: Asegúrate de escribirlo con doble «l» (FlashGallery), ya que a nivel de marca y en las búsquedas de tiendas luce mucho más profesional y natural.
+
+Package Name (ID de la aplicación): Como en Android cada app necesita un identificador único en formato inverso, te sugiero usar:
+
+com.flashchip.flashgallery (o com.worfred.flashgallery)
+
+Con el nombre definido como FlashGallery, el proyecto ya tiene identidad completa. ¿Le metemos mano ya a la versión 1.01 y empezamos a generar los primeros archivos para Antigravity?
