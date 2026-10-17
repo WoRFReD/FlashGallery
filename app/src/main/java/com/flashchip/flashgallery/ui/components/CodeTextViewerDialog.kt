@@ -101,7 +101,7 @@ fun CodeTextViewerDialog(
 
     var lines by remember { mutableStateOf<List<String>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-    var isWordWrap by remember { mutableStateOf(false) }
+    var isWordWrap by remember { mutableStateOf(true) }
     var isSearchOpen by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var searchMatches by remember { mutableStateOf<List<Int>>(emptyList()) }
@@ -116,26 +116,18 @@ fun CodeTextViewerDialog(
         withContext(Dispatchers.IO) {
             try {
                 if (doc.file.exists()) {
-                    val fileLines = mutableListOf<String>()
-                    doc.file.bufferedReader(Charsets.UTF_8).useLines { sequence ->
-                        var count = 0
-                        for (line in sequence) {
-                            fileLines.add(line)
-                            count++
-                            if (count >= 10000) {
-                                fileLines.add("--- [FlashGallery: Archivo truncado a 10.000 líneas por rendimiento] ---")
-                                break
-                            }
-                        }
+                    lines = doc.file.bufferedReader(Charsets.UTF_8).useLines { seq ->
+                        processRawLines(seq, doc.extension)
                     }
-                    lines = fileLines
                 } else {
                     lines = listOf("El archivo no existe o no se puede leer.")
                 }
             } catch (e: Exception) {
                 try {
                     // Intento con charset ISO-8859-1 si falla UTF-8
-                    lines = doc.file.readLines(Charsets.ISO_8859_1)
+                    lines = doc.file.bufferedReader(Charsets.ISO_8859_1).useLines { seq ->
+                        processRawLines(seq, doc.extension)
+                    }
                 } catch (e2: Exception) {
                     lines = listOf("Error al leer archivo: ${e.localizedMessage}")
                 }
@@ -415,12 +407,23 @@ fun CodeTextViewerDialog(
                     val gutterWidth = (maxLineDigits * 10 + 20).dp
 
                     SelectionContainer {
-                        Row(modifier = Modifier.fillMaxSize()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .then(
+                                    if (!isWordWrap) Modifier.horizontalScroll(horizontalScrollState)
+                                    else Modifier
+                                )
+                        ) {
                             // Columna de código y números con LazyColumn para rendimiento instantáneo
                             LazyColumn(
                                 state = lazyListState,
                                 modifier = Modifier
-                                    .fillMaxSize()
+                                    .fillMaxHeight()
+                                    .then(
+                                        if (!isWordWrap) Modifier.width(3000.dp)
+                                        else Modifier.fillMaxWidth()
+                                    )
                                     .background(BgDark),
                                 contentPadding = PaddingValues(vertical = 8.dp)
                             ) {
@@ -463,22 +466,14 @@ fun CodeTextViewerDialog(
                                             SyntaxHighlighter.highlight(rawLine, doc.extension, searchQuery)
                                         }
 
-                                        val lineModifier = if (isWordWrap) {
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .padding(end = 12.dp, top = 2.dp, bottom = 2.dp)
-                                        } else {
-                                            Modifier
-                                                .horizontalScroll(horizontalScrollState)
-                                                .padding(end = 24.dp, top = 2.dp, bottom = 2.dp)
-                                        }
-
                                         Text(
                                             text = annotatedText,
                                             fontSize = 12.5.sp,
                                             fontFamily = FontFamily.Monospace,
                                             lineHeight = 18.sp,
-                                            modifier = lineModifier
+                                            modifier = Modifier
+                                                .then(if (isWordWrap) Modifier.fillMaxWidth() else Modifier)
+                                                .padding(end = 24.dp, top = 2.dp, bottom = 2.dp)
                                         )
                                     }
                                 }
@@ -486,6 +481,58 @@ fun CodeTextViewerDialog(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Procesa las líneas leídas del archivo de forma segura:
+ * - Formatea archivos minificados / dumps de XML y JSON introduciendo saltos de línea.
+ * - Fragmenta líneas excesivamente largas para no saturar el motor de renderizado de texto de Android.
+ * - Limita el número de líneas cargadas en memoria para evitar OutOfMemory.
+ */
+private fun processRawLines(sequence: Sequence<String>, extension: String): List<String> {
+    val result = ArrayList<String>(1000)
+    val ext = extension.lowercase()
+    val maxLines = 15000
+
+    for (rawLine in sequence) {
+        if (result.size >= maxLines) {
+            result.add("... [Archivo muy extenso, truncado a $maxLines líneas para rendimiento] ...")
+            break
+        }
+
+        if (rawLine.length > 200 && (ext == "xml" || ext == "html" || ext == "htm" || ext == "svg") && rawLine.contains("><")) {
+            // Romper XML minificado / dumps como uiautomator dump en múltiples líneas legibles
+            val formatted = rawLine.replace("><", ">\n<")
+            formatted.lineSequence().forEach { subLine ->
+                if (result.size < maxLines) {
+                    chunkAndAdd(result, subLine, maxLines)
+                }
+            }
+        } else if (rawLine.length > 200 && ext == "json" && (rawLine.contains("},{") || rawLine.contains("\",\""))) {
+            // Romper JSON minificado
+            val formatted = rawLine.replace("},{", "},\n{").replace("\",\"", "\",\n\"")
+            formatted.lineSequence().forEach { subLine ->
+                if (result.size < maxLines) {
+                    chunkAndAdd(result, subLine, maxLines)
+                }
+            }
+        } else {
+            chunkAndAdd(result, rawLine, maxLines)
+        }
+    }
+    return result
+}
+
+private fun chunkAndAdd(target: MutableList<String>, line: String, maxLines: Int) {
+    if (line.length <= 400) {
+        target.add(line)
+    } else {
+        line.chunked(400).forEach { chunk ->
+            if (target.size < maxLines) {
+                target.add(chunk)
             }
         }
     }

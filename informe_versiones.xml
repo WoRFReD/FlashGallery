@@ -178,15 +178,16 @@
         </Version>
 
         <!-- ========================================== -->
-        <!-- Versión 1.13                               -->
+        <!-- Versión 1.14                               -->
         <!-- ========================================== -->
-        <Version id="1.13" codigo="113">
+        <Version id="1.14" codigo="114">
             <Fecha>17/10/2026</Fecha>
-            <Titulo>Corrección de bucle infinito OTA y firma Release para Google Play Protect</Titulo>
+            <Titulo>Botón Compartir en selección múltiple, solución recorte de miniaturas y visor de código blindado</Titulo>
             <Cambios>
-                <Cambio tipo="correccion">Solución del bucle infinito de actualización: la versión actual ahora se lee dinámicamente desde PackageManager en lugar de estar fijada en código, evitando que tras actualizar vuelva a saltar el diálogo.</Cambio>
-                <Cambio tipo="seguridad">Compilación Release oficial firmada (assembleRelease): generación de almacén de claves flashgallery-release.jks y firma criptográfica V1 y V2 para que Google Play Protect verifique la APK como segura y limpia ("ok").</Cambio>
-                <Cambio tipo="herramientas">actualizar_y_probar.bat actualizado para generar APK release oficial (FlashGallery.apk) lista para producción y distribución sin advertencias de Play Protect.</Cambio>
+                <Cambio tipo="nueva_funcion">Botón 'Compartir' en la barra de selección múltiple: permite enviar una o múltiples fotos y vídeos a cualquier aplicación (WhatsApp, Telegram, Drive, etc.) mediante Android ShareSheet con permisos de lectura garantizados.</Cambio>
+                <Cambio tipo="correccion">Corrección del recorte de la fila superior: ajuste del margen superior (contentPadding = 76.dp) para que la primera fila de fotos y los iconos circulares de selección ('v') queden completamente visibles y holgados bajo la barra del mes fijada.</Cambio>
+                <Cambio tipo="correccion">Solución del cierre inesperado (crash) al abrir dumps de XML y archivos extensos en el visor de código: nuevo preprocesador automático (processRawLines) que formatea y desglosa archivos minificados sin saltos de línea (como picker_dump.xml) en bloques seguros de 400 caracteres.</Cambio>
+                <Cambio tipo="optimizacion">Reestructuración del scroll horizontal en el visor Notepad++ a nivel de contenedor padre, evitando colisiones de ScrollState en Jetpack Compose y activando ajuste de línea (Word Wrap) por defecto para lectura cómoda en móviles.</Cambio>
             </Cambios>
         </Version>
     </HistorialVersiones>

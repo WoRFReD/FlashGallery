@@ -60,37 +60,48 @@ object SyntaxHighlighter {
     private val mdHeaderPattern = Pattern.compile("^#{1,6}\\s+.*")
 
     fun highlight(line: String, extension: String, searchQuery: String = ""): AnnotatedString {
+        if (line.isEmpty()) return AnnotatedString("")
+        if (line.length > 800) {
+            return AnnotatedString(line)
+        }
+
         val ext = extension.lowercase()
         val builder = AnnotatedString.Builder(line)
 
         // Estilo base
         builder.addStyle(SpanStyle(color = TextPrimary), 0, line.length)
 
-        when (ext) {
-            "xml", "html", "htm", "svg" -> highlightXml(builder, line)
-            "json" -> highlightJson(builder, line)
-            "kt", "kts", "java", "js", "ts", "py", "sh", "bat", "cmd", "sql", "css", "c", "cpp", "h" -> highlightCode(builder, line)
-            "log", "txt", "ini", "conf", "properties", "cfg", "md" -> highlightLogOrConfig(builder, line)
-            else -> highlightCode(builder, line)
+        try {
+            when (ext) {
+                "xml", "html", "htm", "svg" -> highlightXml(builder, line)
+                "json" -> highlightJson(builder, line)
+                "kt", "kts", "java", "js", "ts", "py", "sh", "bat", "cmd", "sql", "css", "c", "cpp", "h" -> highlightCode(builder, line)
+                "log", "txt", "ini", "conf", "properties", "cfg", "md" -> highlightLogOrConfig(builder, line)
+                else -> highlightCode(builder, line)
+            }
+        } catch (_: Throwable) {
+            // Protección ante posibles excepciones en expresiones regulares
         }
 
         // Resaltar coincidencias de búsqueda si existen
         if (searchQuery.isNotBlank()) {
-            var startIndex = 0
-            while (true) {
-                val index = line.indexOf(searchQuery, startIndex, ignoreCase = true)
-                if (index == -1) break
-                builder.addStyle(
-                    SpanStyle(
-                        background = searchMatchBg,
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    index,
-                    index + searchQuery.length
-                )
-                startIndex = index + searchQuery.length
-            }
+            try {
+                var startIndex = 0
+                while (true) {
+                    val index = line.indexOf(searchQuery, startIndex, ignoreCase = true)
+                    if (index == -1) break
+                    builder.addStyle(
+                        SpanStyle(
+                            background = searchMatchBg,
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        index,
+                        index + searchQuery.length
+                    )
+                    startIndex = index + searchQuery.length
+                }
+            } catch (_: Throwable) {}
         }
 
         return builder.toAnnotatedString()

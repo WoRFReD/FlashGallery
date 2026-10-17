@@ -217,6 +217,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(selectedMediaIds = emptySet(), isSelectionMode = false) }
     }
 
+    fun getSelectedMediaItems(): List<MediaItem> {
+        val ids = _uiState.value.selectedMediaIds
+        if (ids.isEmpty()) return emptyList()
+        val allMedia = if (_uiState.value.selectedAppFolder != null) {
+            _uiState.value.selectedAppFolder!!.items
+        } else {
+            _uiState.value.timelineItems.filterIsInstance<GalleryItem.Media>().map { it.item }
+        }
+        return allMedia.filter { ids.contains(it.id) }
+    }
+
     fun openViewer(item: MediaItem?, list: List<MediaItem>? = null) {
         if (item == null) {
             _uiState.update {

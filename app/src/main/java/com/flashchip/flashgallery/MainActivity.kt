@@ -1,4 +1,4 @@
-// Version 1.13 - FlashGallery
+// Version 1.14 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery
@@ -49,6 +49,7 @@ import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -182,6 +183,51 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
         }
     }
 
+    val appVersion = remember {
+        try {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.14"
+        } catch (_: Exception) {
+            "1.14"
+        }
+    }
+
+    val onShareSelectedMedia = {
+        val selected = viewModel.getSelectedMediaItems()
+        if (selected.isNotEmpty()) {
+            try {
+                val shareIntent = if (selected.size == 1) {
+                    val item = selected.first()
+                    Intent(Intent.ACTION_SEND).apply {
+                        type = if (item.isVideo) "video/*" else "image/*"
+                        putExtra(Intent.EXTRA_STREAM, item.uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                } else {
+                    val uris = ArrayList<Uri>(selected.size)
+                    var hasVideo = false
+                    var hasImage = false
+                    for (item in selected) {
+                        uris.add(item.uri)
+                        if (item.isVideo) hasVideo = true else hasImage = true
+                    }
+                    val mimeType = when {
+                        hasImage && !hasVideo -> "image/*"
+                        hasVideo && !hasImage -> "video/*"
+                        else -> "*/*"
+                    }
+                    Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                        type = mimeType
+                        putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                }
+                context.startActivity(Intent.createChooser(shareIntent, "Compartir multimedia"))
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error al compartir: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         val needsPermissions = mutableListOf<String>()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -267,6 +313,14 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
                             }
                         },
                         actions = {
+                            // Compartir seleccionados
+                            IconButton(onClick = onShareSelectedMedia) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Compartir seleccionados",
+                                    tint = FlashCyan
+                                )
+                            }
                             // Seleccionar todo
                             IconButton(onClick = { viewModel.selectAllMedia(true) }) {
                                 Icon(
@@ -322,7 +376,7 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = "v1.13 • by WoRFReD",
+                                        text = "v$appVersion • by WoRFReD",
                                         color = FlashCyan,
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Medium
@@ -577,10 +631,7 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
             isCheckingUpdates = uiState.isCheckingOta,
             onCheckUpdates = {
                 viewModel.checkForUpdates(manual = true) {
-                    val currentVer = try {
-                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.13"
-                    } catch (_: Exception) { "1.13" }
-                    Toast.makeText(context, "Tienes la versión más reciente (v$currentVer)", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Tienes la versión más reciente (v$appVersion)", Toast.LENGTH_SHORT).show()
                 }
             },
             onDismiss = { viewModel.showAboutDialog(false) }

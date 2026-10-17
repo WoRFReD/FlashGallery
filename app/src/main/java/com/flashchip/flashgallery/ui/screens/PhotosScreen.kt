@@ -307,7 +307,7 @@ fun PhotosScreen(
                     LazyVerticalGrid(
                         state = gridState,
                         columns = GridCells.Fixed(gridColumns),
-                        contentPadding = PaddingValues(top = 56.dp, bottom = 80.dp),
+                        contentPadding = PaddingValues(top = 76.dp, bottom = 80.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(
