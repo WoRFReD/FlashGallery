@@ -1,4 +1,4 @@
-// Version 1.01 - FlashGallery
+// Version 1.20 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery
@@ -10,17 +10,16 @@ import coil.decode.VideoFrameDecoder
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.flashchip.flashgallery.data.MediaStoreThumbnailFetcher
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 
-/**
- * Clase Application personalizada para configurar el ImageLoader de Coil
- * optimizado al maximo para rendimiento de galeria de fotos:
- * - 35% de memoria RAM para cache instantanea de miniaturas
- * - Cache en disco de 300MB
- * - Decodificacion RGB_565 (2x mas rapida y la mitad de RAM)
- * - Thumbnails nativos de Android por hardware
- * - Cero animaciones de retardo artificial en el scroll
- */
 class FlashGalleryApp : Application(), ImageLoaderFactory {
+
+    override fun onCreate() {
+        super.onCreate()
+        try {
+            PDFBoxResourceLoader.init(applicationContext)
+        } catch (_: Exception) {}
+    }
 
     override fun newImageLoader(): ImageLoader {
         return ImageLoader.Builder(this)

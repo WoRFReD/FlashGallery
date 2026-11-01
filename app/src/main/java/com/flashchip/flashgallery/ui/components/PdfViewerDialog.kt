@@ -1,4 +1,4 @@
-// Version 1.19 - FlashGallery
+// Version 1.20 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.ui.components
@@ -10,6 +10,7 @@ import android.os.ParcelFileDescriptor
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,18 +29,31 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.ZoomOut
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
@@ -52,6 +66,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,6 +80,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -75,13 +94,19 @@ import com.flashchip.flashgallery.ui.theme.BgDark
 import com.flashchip.flashgallery.ui.theme.BorderDark
 import com.flashchip.flashgallery.ui.theme.FlashAmber
 import com.flashchip.flashgallery.ui.theme.FlashCyan
+import com.flashchip.flashgallery.ui.theme.FlashRed
 import com.flashchip.flashgallery.ui.theme.SurfaceDark
 import com.flashchip.flashgallery.ui.theme.SurfaceDarkVariant
 import com.flashchip.flashgallery.ui.theme.TextPrimary
 import com.flashchip.flashgallery.ui.theme.TextSecondary
 import com.flashchip.flashgallery.ui.theme.TextTertiary
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
+import com.tom_roush.pdfbox.pdmodel.PDDocument
+import com.tom_roush.pdfbox.pdmodel.encryption.InvalidPasswordException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 @Composable
 fun PdfViewerDialog(
@@ -102,9 +127,93 @@ fun PdfViewerDialog(
     var isLoadingPage by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    // Estado para contraseñas de PDFs protegidos
+    var isPasswordRequired by remember { mutableStateOf(false) }
+    var passwordInput by remember { mutableStateOf("") }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var isPasswordVisible by remember { mutableStateOf(false) }
+    var isUnlocking by remember { mutableStateOf(false) }
+    var decryptedTempFile by remember { mutableStateOf<File?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+
     // Zoom y Pan
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
+
+    // Limpieza de recursos al cerrar
+    DisposableEffect(Unit) {
+        onDispose {
+            try { pfd?.close() } catch (_: Exception) {}
+            try { renderer?.close() } catch (_: Exception) {}
+            try { decryptedTempFile?.delete() } catch (_: Exception) {}
+        }
+    }
+
+    // Función para desbloquear PDF con contraseña
+    fun unlockPdf(password: String) {
+        coroutineScope.launch {
+            withContext(Dispatchers.IO) {
+                isUnlocking = true
+                passwordError = null
+                try {
+                    PDFBoxResourceLoader.init(context)
+
+                    val inputStream = try {
+                        context.contentResolver.openInputStream(doc.uri)
+                    } catch (_: Exception) {
+                        null
+                    } ?: if (doc.file.exists()) doc.file.inputStream() else null
+
+                    if (inputStream == null) {
+                        passwordError = "No se pudo leer el archivo PDF."
+                        isUnlocking = false
+                        return@withContext
+                    }
+
+                    val document = try {
+                        PDDocument.load(inputStream, password)
+                    } catch (e: InvalidPasswordException) {
+                        passwordError = "Contraseña incorrecta. Inténtalo de nuevo."
+                        isUnlocking = false
+                        try { inputStream.close() } catch (_: Exception) {}
+                        return@withContext
+                    } catch (e: Exception) {
+                        passwordError = "Error al abrir documento: ${e.localizedMessage ?: "Clave inválida"}"
+                        isUnlocking = false
+                        try { inputStream.close() } catch (_: Exception) {}
+                        return@withContext
+                    }
+
+                    if (document.isEncrypted) {
+                        document.isAllSecurityToBeRemoved = true
+                    }
+
+                    val decryptedFile = File(context.cacheDir, "decrypted_${System.currentTimeMillis()}.pdf")
+                    document.save(decryptedFile)
+                    document.close()
+                    try { inputStream.close() } catch (_: Exception) {}
+
+                    val newDescriptor = ParcelFileDescriptor.open(decryptedFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                    val newRenderer = PdfRenderer(newDescriptor)
+
+                    try { pfd?.close() } catch (_: Exception) {}
+                    try { renderer?.close() } catch (_: Exception) {}
+
+                    pfd = newDescriptor
+                    renderer = newRenderer
+                    pageCount = newRenderer.pageCount
+                    currentPageIndex = 0
+                    isPasswordRequired = false
+                    passwordError = null
+                    decryptedTempFile = decryptedFile
+                } catch (e: Exception) {
+                    passwordError = "Error al procesar PDF: ${e.localizedMessage}"
+                } finally {
+                    isUnlocking = false
+                }
+            }
+        }
+    }
 
     // Abrir PdfRenderer
     LaunchedEffect(doc.uri, doc.file) {
@@ -128,11 +237,19 @@ fun PdfViewerDialog(
                     renderer = pdfRenderer
                     pageCount = pdfRenderer.pageCount
                     currentPageIndex = 0
+                    isPasswordRequired = false
+                    errorMessage = null
                 } else {
                     errorMessage = "No se pudo acceder al archivo PDF."
                 }
             } catch (e: Exception) {
-                errorMessage = "No se pudo abrir el PDF: ${e.localizedMessage}"
+                val msg = e.localizedMessage ?: ""
+                if (e is SecurityException || msg.contains("password", ignoreCase = true) || msg.contains("Password", ignoreCase = true)) {
+                    isPasswordRequired = true
+                    errorMessage = null
+                } else {
+                    errorMessage = "No se pudo abrir el PDF: $msg"
+                }
             }
         }
     }
@@ -308,7 +425,137 @@ fun PdfViewerDialog(
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    if (errorMessage != null) {
+                    if (isPasswordRequired) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth(0.92f)
+                                .padding(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = SurfaceDark),
+                            border = BorderStroke(1.dp, FlashCyan.copy(alpha = 0.5f)),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(60.dp)
+                                        .clip(CircleShape)
+                                        .background(FlashAmber.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = null,
+                                        tint = FlashAmber,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(14.dp))
+                                Text(
+                                    text = "PDF protegido con contraseña",
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "Este documento está cifrado. Introduce su clave para desbloquearlo y leerlo aquí:",
+                                    color = TextSecondary,
+                                    fontSize = 12.sp,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(18.dp))
+
+                                OutlinedTextField(
+                                    value = passwordInput,
+                                    onValueChange = {
+                                        passwordInput = it
+                                        passwordError = null
+                                    },
+                                    label = { Text("Contraseña del documento") },
+                                    placeholder = { Text("Escribe aquí la clave...") },
+                                    singleLine = true,
+                                    visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                    keyboardOptions = KeyboardOptions(
+                                        keyboardType = KeyboardType.Password,
+                                        imeAction = ImeAction.Done
+                                    ),
+                                    keyboardActions = KeyboardActions(
+                                        onDone = {
+                                            if (passwordInput.isNotBlank() && !isUnlocking) {
+                                                unlockPdf(passwordInput)
+                                            }
+                                        }
+                                    ),
+                                    trailingIcon = {
+                                        IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                            Icon(
+                                                imageVector = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                                contentDescription = if (isPasswordVisible) "Ocultar" else "Mostrar",
+                                                tint = TextSecondary
+                                            )
+                                        }
+                                    },
+                                    isError = passwordError != null,
+                                    supportingText = {
+                                        if (passwordError != null) {
+                                            Text(text = passwordError!!, color = FlashRed, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = FlashCyan,
+                                        unfocusedBorderColor = BorderDark,
+                                        focusedTextColor = TextPrimary,
+                                        unfocusedTextColor = TextPrimary
+                                    )
+                                )
+
+                                Spacer(modifier = Modifier.height(18.dp))
+
+                                Button(
+                                    onClick = { unlockPdf(passwordInput) },
+                                    enabled = passwordInput.isNotBlank() && !isUnlocking,
+                                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = FlashCyan, contentColor = BgDark),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    if (isUnlocking) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(18.dp),
+                                            color = BgDark,
+                                            strokeWidth = 2.dp
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Desbloqueando documento...", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    } else {
+                                        Icon(imageVector = Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Desbloquear y Abrir", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                OutlinedButton(
+                                    onClick = onOpenExternal,
+                                    modifier = Modifier.fillMaxWidth().height(42.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
+                                    border = BorderStroke(1.dp, BorderDark),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Icon(imageVector = Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Abrir en visor externo", fontSize = 13.sp)
+                                }
+                            }
+                        }
+                    } else if (errorMessage != null) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.padding(24.dp)
@@ -327,14 +574,25 @@ fun PdfViewerDialog(
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            IconButton(
+                            Button(
                                 onClick = onOpenExternal,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(FlashCyan.copy(alpha = 0.2f))
-                                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = FlashCyan.copy(alpha = 0.2f),
+                                    contentColor = FlashCyan
+                                ),
+                                shape = RoundedCornerShape(8.dp)
                             ) {
-                                Text(text = "Abrir en visor externo", color = FlashCyan, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Icon(
+                                    imageVector = Icons.Default.OpenInNew,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Abrir en visor externo",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp
+                                )
                             }
                         }
                     } else if (currentBitmap != null) {
@@ -365,7 +623,7 @@ fun PdfViewerDialog(
                 }
 
                 // Barra de Navegación Inferior (Paginador)
-                if (pageCount > 1) {
+                if (pageCount > 1 && !isPasswordRequired && errorMessage == null) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

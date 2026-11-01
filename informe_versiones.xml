@@ -6,8 +6,8 @@
         <Autor>WoRFReD</Autor>
         <Canal>FlashChip</Canal>
         <FechaCreacion>Octubre 2026</FechaCreacion>
-        <VersionActual>1.19</VersionActual>
-        <VersionCodeActual>119</VersionCodeActual>
+        <VersionActual>1.20</VersionActual>
+        <VersionCodeActual>120</VersionCodeActual>
         <UbicacionProyecto>C:\APPs_Atigravity\FlashGallery_APK</UbicacionProyecto>
     </Proyecto>
 
@@ -259,6 +259,18 @@
                 <Cambio tipo="correccion">Solución definitiva al mover imágenes o vídeos a otra carpeta: se preserva rigurosamente la fecha original de captura y modificación (dateTaken y lastModified), actualizando el registro de MediaStore en su lugar o sincronizándolo sin eliminar el elemento. En la pestaña 'Línea de tiempo' la foto permanece visible en su posición cronológica exacta y en 'De tus apps' pasa a la nueva carpeta.</Cambio>
                 <Cambio tipo="nueva_funcion">Integración en el menú 'Abrir con...' de Android: FlashGallery ahora aparece como opción para abrir archivos PDF, documentos de Office (Word, Excel, PowerPoint), texto y código desde apps externas como WhatsApp, Telegram, navegadores y gestores de archivos.</Cambio>
                 <Cambio tipo="interfaz">Apertura instantánea en visor integrado: cuando otra aplicación envía un PDF o documento, FlashGallery lo visualiza directamente en su visor nativo correspondiente (PdfViewerDialog, OfficeDocViewerDialog) mediante streaming seguro por ContentResolver y clonado a caché si es necesario.</Cambio>
+            </Cambios>
+        </Version>
+        <!-- ========================================== -->
+        <!-- Versión 1.20                               -->
+        <!-- ========================================== -->
+        <Version id="1.20" codigo="120">
+            <Fecha>02/11/2026</Fecha>
+            <Titulo>Soporte de PDFs protegidos con contraseña y rediseño de interfaz de desbloqueo</Titulo>
+            <Cambios>
+                <Cambio tipo="nueva_funcion">Desbloqueo nativo de PDFs protegidos con contraseña: integración del motor de seguridad PDFBox-Android para descifrar documentos protegidos en memoria/caché temporal y visualizarlos inmediatamente con aceleración por hardware en el visor integrado.</Cambio>
+                <Cambio tipo="interfaz">Tarjeta Cyberpunk interactiva de desbloqueo: formulario integrado con campo de contraseña, botón para alternar visibilidad (mostrar/ocultar clave), indicador de carga animado y validación de contraseña incorrecta con reintento inmediato.</Cambio>
+                <Cambio tipo="correccion">Corrección del recorte visual en el botón 'Abrir en visor externo' dentro del visor PDF: reemplazado IconButton con caja fija de 48dp por Button adaptable con icono y texto completo 'Abrir en visor externo'.</Cambio>
             </Cambios>
         </Version>
     </HistorialVersiones>

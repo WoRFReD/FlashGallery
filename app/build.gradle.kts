@@ -1,4 +1,4 @@
-// Version 1.19 - FlashGallery
+// Version 1.20 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 plugins {
@@ -14,8 +14,8 @@ android {
         applicationId = "com.flashchip.flashgallery"
         minSdk = 26
         targetSdk = 34
-        versionCode = 119
-        versionName = "1.19"
+        versionCode = 120
+        versionName = "1.20"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -102,6 +102,9 @@ dependencies {
 
     // Google ML Kit Text Recognition (OCR / Live Text - 100% on-device & offline)
     implementation("com.google.mlkit:text-recognition:16.0.1")
+
+    // PDFBox Android for opening password-protected / encrypted PDFs
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

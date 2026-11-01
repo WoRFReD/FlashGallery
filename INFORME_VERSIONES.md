@@ -1,7 +1,7 @@
 # 📋 HISTORIAL Y CONTROL DE VERSIONES
 > **Proyecto:** FlashGallery  
 > **Autor:** WoRFReD • **Canal:** FlashChip (https://youtube.com/@flashchiped)  
-> **Versión Actual:** 1.19 • **Código:** 119 • **Fecha de Inicio:** 14/10/2026  
+> **Versión Actual:** 1.20 • **Código:** 120 • **Fecha de Inicio:** 14/10/2026  
 > **Ubicación:** C:\APPs_Atigravity\FlashGallery_APK  
 
 ---
@@ -13,6 +13,15 @@ Cada nueva versión debe documentar sus modificaciones usando estos identificado
 * 🔴 **[CORRECCION]**: Solución de bugs, crashes, cierres inesperados o fallos de compilación.
 * 🔵 **[OPTIMIZACION]**: Reducción de tiempos de carga, memoria, peso de APK o rendimiento.
 * 🟣 **[SEGURIDAD]**: Permisos de Android, firmas, certificados o compatibilidad.
+
+---
+
+## 🚀 Versión 1.20 (Código: 120) — 02/11/2026
+### *Soporte de PDFs protegidos con contraseña y rediseño de interfaz de desbloqueo*
+
+* 🟢 **[NUEVA_FUNCION]**: Desbloqueo nativo de PDFs protegidos con contraseña: integración del motor de seguridad PDFBox-Android para descifrar documentos protegidos en memoria/caché temporal y visualizarlos inmediatamente con aceleración por hardware en el visor integrado.
+* 🟡 **[INTERFAZ]**: Tarjeta Cyberpunk interactiva de desbloqueo: formulario integrado con campo de contraseña, botón para alternar visibilidad (mostrar/ocultar clave), indicador de carga animado y validación de contraseña incorrecta con reintento inmediato.
+* 🔴 **[CORRECCION]**: Corrección del recorte visual en el botón 'Abrir en visor externo' dentro del visor PDF: reemplazado IconButton con caja fija de 48dp por Button adaptable con icono y texto completo 'Abrir en visor externo'.
 
 ---
 
