@@ -1,4 +1,4 @@
-// Version 1.01 - FlashGallery
+// Version 1.19 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.viewmodel
@@ -334,11 +334,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun moveSelectedMediaToFolder(targetFolder: File) {
         viewModelScope.launch {
             val ids = _uiState.value.selectedMediaIds
-            val all = _uiState.value.selectedAppFolder?.items
-                ?: _uiState.value.timelineItems.filterIsInstance<GalleryItem.Media>().map { it.item }
-            val itemsToMove = all.filter { ids.contains(it.id) }
+            val all = mutableListOf<MediaItem>()
+            _uiState.value.timelineItems.forEach { gItem ->
+                when (gItem) {
+                    is GalleryItem.MonthHeader -> all.addAll(gItem.mediaList)
+                    is GalleryItem.Media -> all.add(gItem.item)
+                }
+            }
+            _uiState.value.selectedAppFolder?.items?.let { all.addAll(it) }
+            val itemsToMove = all.distinctBy { it.id }.filter { ids.contains(it.id) }
 
-            mediaRepository.moveMedia(itemsToMove, targetFolder)
+            if (itemsToMove.isNotEmpty()) {
+                mediaRepository.moveMedia(itemsToMove, targetFolder)
+            }
+
             _uiState.update {
                 it.copy(
                     isMoveFolderDialogVisible = false,
@@ -346,6 +355,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     isSelectionMode = false
                 )
             }
+            kotlinx.coroutines.delay(200)
             loadMedia()
         }
     }
@@ -353,12 +363,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteSelectedMedia() {
         viewModelScope.launch {
             val ids = _uiState.value.selectedMediaIds
-            val all = _uiState.value.selectedAppFolder?.items
-                ?: _uiState.value.timelineItems.filterIsInstance<GalleryItem.Media>().map { it.item }
-            for (media in all) {
-                if (ids.contains(media.id)) {
-                    mediaRepository.deleteMedia(media)
+            val all = mutableListOf<MediaItem>()
+            _uiState.value.timelineItems.forEach { gItem ->
+                when (gItem) {
+                    is GalleryItem.MonthHeader -> all.addAll(gItem.mediaList)
+                    is GalleryItem.Media -> all.add(gItem.item)
                 }
+            }
+            _uiState.value.selectedAppFolder?.items?.let { all.addAll(it) }
+            val itemsToDelete = all.distinctBy { it.id }.filter { ids.contains(it.id) }
+            for (media in itemsToDelete) {
+                mediaRepository.deleteMedia(media)
             }
             _uiState.update {
                 it.copy(
@@ -489,6 +504,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             docRepository.deleteDocument(doc)
             _uiState.update { it.copy(docToDelete = null, isDeleteDocDialogVisible = false) }
             loadDocs()
+        }
+    }
+
+    fun handleExternalUri(context: android.content.Context, uri: android.net.Uri, mimeType: String?) {
+        viewModelScope.launch {
+            val resolvedType = mimeType ?: context.contentResolver.getType(uri) ?: ""
+
+            // 1. Imagen o Vídeo
+            if (resolvedType.startsWith("image/") || resolvedType.startsWith("video/")) {
+                val mediaItem = mediaRepository.createMediaItemFromUri(context, uri, resolvedType)
+                if (mediaItem != null) {
+                    openViewer(mediaItem, listOf(mediaItem))
+                    return@launch
+                }
+            }
+
+            // 2. Documentos (PDF, Office, Código / Texto)
+            val docItem = docRepository.createDocItemFromUri(context, uri, resolvedType)
+            if (docItem != null) {
+                openDocument(docItem)
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-// Version 1.01 - FlashGallery
+// Version 1.19 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.data
@@ -9,6 +9,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.core.content.FileProvider
@@ -235,6 +236,125 @@ class DocRepository(private val context: Context) {
             }
         } catch (_: Exception) {
             false
+        }
+    }
+
+    fun createDocItemFromUri(context: Context, uri: Uri, mimeTypeHint: String?): DocItem? {
+        return try {
+            var displayName = ""
+            var sizeBytes: Long = 0L
+
+            if (uri.scheme == "file") {
+                val file = File(uri.path ?: "")
+                if (file.exists()) {
+                    val ext = file.extension.lowercase()
+                    val category = resolveCategory(ext)
+                    return DocItem(
+                        file = file,
+                        name = file.name,
+                        extension = ext,
+                        sizeBytes = file.length(),
+                        sizeFormatted = formatFileSize(file.length()),
+                        lastModified = file.lastModified(),
+                        category = category,
+                        uri = uri
+                    )
+                }
+            }
+
+            // Consultar metadata mediante OpenableColumns (WhatsApp, Gmail, Exploradores)
+            try {
+                val cursor = context.contentResolver.query(uri, null, null, null, null)
+                cursor?.use {
+                    if (it.moveToFirst()) {
+                        val nameCol = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (nameCol != -1) displayName = it.getString(nameCol) ?: ""
+                        val sizeCol = it.getColumnIndex(OpenableColumns.SIZE)
+                        if (sizeCol != -1 && !it.isNull(sizeCol)) sizeBytes = it.getLong(sizeCol)
+                    }
+                }
+            } catch (_: Exception) {}
+
+            if (displayName.isBlank()) {
+                displayName = uri.lastPathSegment ?: "documento.pdf"
+            }
+
+            var ext = displayName.substringAfterLast('.', "").lowercase()
+            if (ext.isBlank() || ext == displayName.lowercase()) {
+                val resolvedMime = mimeTypeHint ?: context.contentResolver.getType(uri) ?: ""
+                ext = when {
+                    resolvedMime.contains("pdf") -> "pdf"
+                    resolvedMime.contains("word") || resolvedMime.contains("officedocument.word") -> "docx"
+                    resolvedMime.contains("excel") || resolvedMime.contains("spreadsheet") -> "xlsx"
+                    resolvedMime.contains("powerpoint") || resolvedMime.contains("presentation") -> "pptx"
+                    resolvedMime.contains("text/plain") -> "txt"
+                    resolvedMime.contains("text/csv") -> "csv"
+                    else -> "pdf"
+                }
+                if (!displayName.contains(".")) {
+                    displayName = "$displayName.$ext"
+                }
+            }
+
+            // Localizar archivo físico directo si ya está en almacenamiento accesible
+            var resolvedFile: File? = null
+            try {
+                val path = uri.path
+                if (path != null) {
+                    val f = File(path)
+                    if (f.exists() && f.canRead()) resolvedFile = f
+                }
+            } catch (_: Exception) {}
+
+            if (resolvedFile == null) {
+                try {
+                    val proj = arrayOf(MediaStore.MediaColumns.DATA)
+                    context.contentResolver.query(uri, proj, null, null, null)?.use { c ->
+                        if (c.moveToFirst()) {
+                            val dataPath = c.getString(0)
+                            if (!dataPath.isNullOrBlank()) {
+                                val f = File(dataPath)
+                                if (f.exists() && f.canRead()) resolvedFile = f
+                            }
+                        }
+                    }
+                } catch (_: Exception) {}
+            }
+
+            // Si el archivo no es directamente accesible por ruta (ej. stream privado de WhatsApp o Gmail),
+            // lo clonamos en cacheDir/opened_docs para que PdfRenderer / parsers de Office puedan leerlo y hacer seek
+            var localFile = resolvedFile
+            if (localFile?.exists() != true) {
+                val cacheFolder = File(context.cacheDir, "opened_docs").apply { mkdirs() }
+                val safeName = displayName.replace(Regex("[^a-zA-Z0-9._-]"), "_")
+                val tempFile = File(cacheFolder, safeName)
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    tempFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                if (tempFile.exists()) {
+                    localFile = tempFile
+                    sizeBytes = tempFile.length()
+                }
+            }
+
+            val finalFile = localFile ?: File(uri.path ?: displayName)
+            val category = resolveCategory(ext)
+
+            DocItem(
+                file = finalFile,
+                name = displayName,
+                extension = ext,
+                sizeBytes = sizeBytes,
+                sizeFormatted = formatFileSize(sizeBytes),
+                lastModified = if (finalFile.exists()) finalFile.lastModified() else System.currentTimeMillis(),
+                category = category,
+                uri = uri
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 

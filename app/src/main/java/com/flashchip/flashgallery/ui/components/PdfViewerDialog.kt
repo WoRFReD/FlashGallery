@@ -1,4 +1,4 @@
-// Version 1.10 - FlashGallery
+// Version 1.19 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.ui.components
@@ -63,6 +63,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -89,6 +90,7 @@ fun PdfViewerDialog(
     onShare: () -> Unit,
     onOpenExternal: () -> Unit
 ) {
+    val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
 
@@ -105,18 +107,29 @@ fun PdfViewerDialog(
     var offset by remember { mutableStateOf(Offset.Zero) }
 
     // Abrir PdfRenderer
-    LaunchedEffect(doc.file) {
+    LaunchedEffect(doc.uri, doc.file) {
         withContext(Dispatchers.IO) {
             try {
-                if (doc.file.exists()) {
-                    val descriptor = ParcelFileDescriptor.open(doc.file, ParcelFileDescriptor.MODE_READ_ONLY)
+                val descriptor = try {
+                    context.contentResolver.openFileDescriptor(doc.uri, "r")
+                } catch (_: Exception) {
+                    null
+                } ?: if (doc.file.exists()) {
+                    try {
+                        ParcelFileDescriptor.open(doc.file, ParcelFileDescriptor.MODE_READ_ONLY)
+                    } catch (_: Exception) {
+                        null
+                    }
+                } else null
+
+                if (descriptor != null) {
                     val pdfRenderer = PdfRenderer(descriptor)
                     pfd = descriptor
                     renderer = pdfRenderer
                     pageCount = pdfRenderer.pageCount
                     currentPageIndex = 0
                 } else {
-                    errorMessage = "El archivo PDF no existe."
+                    errorMessage = "No se pudo acceder al archivo PDF."
                 }
             } catch (e: Exception) {
                 errorMessage = "No se pudo abrir el PDF: ${e.localizedMessage}"

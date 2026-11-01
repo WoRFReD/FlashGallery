@@ -1,9 +1,10 @@
-// Version 1.01 - FlashGallery
+// Version 1.19 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.data
 
 import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.media.MediaMetadataRetriever
@@ -23,6 +24,8 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class MediaRepository(private val context: Context) {
 
@@ -43,6 +46,7 @@ class MediaRepository(private val context: Context) {
             MediaStore.Images.Media.DISPLAY_NAME,
             MediaStore.Images.Media.DATE_TAKEN,
             MediaStore.Images.Media.DATE_ADDED,
+            MediaStore.Images.Media.DATE_MODIFIED,
             MediaStore.Images.Media.SIZE,
             MediaStore.Images.Media.WIDTH,
             MediaStore.Images.Media.HEIGHT,
@@ -80,6 +84,7 @@ class MediaRepository(private val context: Context) {
             MediaStore.Video.Media.DISPLAY_NAME,
             MediaStore.Video.Media.DATE_TAKEN,
             MediaStore.Video.Media.DATE_ADDED,
+            MediaStore.Video.Media.DATE_MODIFIED,
             MediaStore.Video.Media.SIZE,
             MediaStore.Video.Media.WIDTH,
             MediaStore.Video.Media.HEIGHT,
@@ -181,9 +186,9 @@ class MediaRepository(private val context: Context) {
         limit: Int? = null
     ) {
         val sortOrder = if (limit != null && limit > 0) {
-            "${MediaStore.MediaColumns.DATE_ADDED} DESC LIMIT $limit"
+            "${MediaStore.MediaColumns.DATE_TAKEN} DESC, ${MediaStore.MediaColumns.DATE_MODIFIED} DESC LIMIT $limit"
         } else {
-            "${MediaStore.MediaColumns.DATE_ADDED} DESC"
+            "${MediaStore.MediaColumns.DATE_TAKEN} DESC, ${MediaStore.MediaColumns.DATE_MODIFIED} DESC"
         }
         var cursor: Cursor? = null
         try {
@@ -194,6 +199,7 @@ class MediaRepository(private val context: Context) {
                 val nameCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
                 val dateTakenCol = cursor.getColumnIndex(MediaStore.MediaColumns.DATE_TAKEN)
                 val dateAddedCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_ADDED)
+                val dateModifiedCol = cursor.getColumnIndex(MediaStore.MediaColumns.DATE_MODIFIED)
                 val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
                 val widthCol = cursor.getColumnIndex(MediaStore.MediaColumns.WIDTH)
                 val heightCol = cursor.getColumnIndex(MediaStore.MediaColumns.HEIGHT)
@@ -207,7 +213,12 @@ class MediaRepository(private val context: Context) {
                     val name = cursor.getString(nameCol) ?: "media_$id"
                     val rawDateTaken = if (dateTakenCol != -1) cursor.getLong(dateTakenCol) else 0L
                     val dateAdded = cursor.getLong(dateAddedCol) * 1000L
-                    val date = if (rawDateTaken > 0) rawDateTaken else dateAdded
+                    val dateModified = if (dateModifiedCol != -1) cursor.getLong(dateModifiedCol) * 1000L else 0L
+                    val date = when {
+                        rawDateTaken > 0 -> rawDateTaken
+                        dateModified > 0 -> dateModified
+                        else -> dateAdded
+                    }
                     val size = cursor.getLong(sizeCol)
                     val width = if (widthCol != -1) cursor.getInt(widthCol) else 0
                     val height = if (heightCol != -1) cursor.getInt(heightCol) else 0
@@ -433,8 +444,8 @@ class MediaRepository(private val context: Context) {
             targetFolder.mkdirs()
         }
         var movedCount = 0
-        val scannedOldPaths = mutableListOf<String>()
-        val scannedNewPaths = mutableListOf<String>()
+        val oldPathsToScan = mutableListOf<String>()
+        val newPathsToScan = mutableListOf<Pair<String, MediaItem>>()
 
         for (item in items) {
             try {
@@ -442,6 +453,12 @@ class MediaRepository(private val context: Context) {
                 val sourceFile = File(item.path)
                 if (!sourceFile.exists()) continue
 
+                // Si el archivo ya reside en la carpeta de destino, no hacemos nada
+                if (sourceFile.parentFile?.canonicalPath == targetFolder.canonicalPath) {
+                    continue
+                }
+
+                val originalLastModified = sourceFile.lastModified()
                 val targetFile = File(targetFolder, sourceFile.name)
                 val finalTargetFile = if (targetFile.exists()) {
                     val nameWithoutExt = sourceFile.nameWithoutExtension
@@ -451,38 +468,189 @@ class MediaRepository(private val context: Context) {
                     targetFile
                 }
 
+                val oldPath = sourceFile.absolutePath
+                val newPath = finalTargetFile.absolutePath
+
                 val success = sourceFile.renameTo(finalTargetFile)
-                if (success) {
-                    movedCount++
-                    scannedOldPaths.add(sourceFile.absolutePath)
-                    scannedNewPaths.add(finalTargetFile.absolutePath)
-                    try {
-                        context.contentResolver.delete(item.uri, null, null)
-                    } catch (_: Exception) {}
+                val movedOk = if (success) {
+                    true
                 } else {
-                    sourceFile.inputStream().use { input ->
-                        finalTargetFile.outputStream().use { output ->
-                            input.copyTo(output)
+                    try {
+                        sourceFile.inputStream().use { input ->
+                            finalTargetFile.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
                         }
-                    }
-                    if (finalTargetFile.exists() && finalTargetFile.length() == sourceFile.length()) {
-                        sourceFile.delete()
-                        movedCount++
-                        scannedOldPaths.add(sourceFile.absolutePath)
-                        scannedNewPaths.add(finalTargetFile.absolutePath)
-                        try {
-                            context.contentResolver.delete(item.uri, null, null)
-                        } catch (_: Exception) {}
+                        if (finalTargetFile.exists() && finalTargetFile.length() == sourceFile.length()) {
+                            sourceFile.delete()
+                            true
+                        } else {
+                            false
+                        }
+                    } catch (_: Exception) {
+                        false
                     }
                 }
+
+                if (!movedOk || !finalTargetFile.exists()) continue
+
+                // Preservar fielmente la fecha de modificacion original del archivo
+                finalTargetFile.setLastModified(originalLastModified)
+                movedCount++
+
+                // Intentar actualizar el registro existente en MediaStore directamente en su lugar
+                // (Mantiene exactamente el mismo ID, fecha de captura y posicion en la linea de tiempo)
+                var updatedInPlace = false
+                try {
+                    val values = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DATA, newPath)
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, finalTargetFile.name)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            val rel = getRelativePathForFile(finalTargetFile)
+                            if (rel != null) {
+                                put(MediaStore.MediaColumns.RELATIVE_PATH, rel)
+                            }
+                        }
+                        if (item.dateTaken > 0) {
+                            put(MediaStore.MediaColumns.DATE_TAKEN, item.dateTaken)
+                        }
+                        put(MediaStore.MediaColumns.DATE_MODIFIED, originalLastModified / 1000L)
+                    }
+                    val rows = context.contentResolver.update(item.uri, values, null, null)
+                    if (rows > 0) {
+                        updatedInPlace = true
+                    }
+                } catch (_: Exception) {}
+
+                if (!updatedInPlace) {
+                    oldPathsToScan.add(oldPath)
+                    newPathsToScan.add(Pair(newPath, item))
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        // Si algun archivo requirio re-escaneo del sistema porque el update directo no aplico:
+        if (newPathsToScan.isNotEmpty()) {
+            val latch = CountDownLatch(newPathsToScan.size)
+            val newPathsArray = newPathsToScan.map { it.first }.toTypedArray()
+            val itemMap = newPathsToScan.associateBy { it.first }
+
+            MediaScannerConnection.scanFile(context, newPathsArray, null) { path, scannedUri ->
+                try {
+                    val originalItem = itemMap[path]?.second
+                    if (scannedUri != null && originalItem != null && originalItem.dateTaken > 0) {
+                        val cv = ContentValues().apply {
+                            put(MediaStore.MediaColumns.DATE_TAKEN, originalItem.dateTaken)
+                            put(MediaStore.MediaColumns.DATE_MODIFIED, File(path).lastModified() / 1000L)
+                        }
+                        context.contentResolver.update(scannedUri, cv, null, null)
+                        if (scannedUri != originalItem.uri) {
+                            try {
+                                context.contentResolver.delete(originalItem.uri, null, null)
+                            } catch (_: Exception) {}
+                        }
+                    }
+                } catch (_: Exception) {} finally {
+                    latch.countDown()
+                }
+            }
+
+            // Esperar activamente a que MediaScanner complete la indexacion (maximo 3s)
+            try {
+                latch.await(3, TimeUnit.SECONDS)
             } catch (_: Exception) {}
         }
 
-        val allPaths = (scannedOldPaths + scannedNewPaths).toTypedArray()
-        if (allPaths.isNotEmpty()) {
-            MediaScannerConnection.scanFile(context, allPaths, null, null)
+        if (oldPathsToScan.isNotEmpty()) {
+            MediaScannerConnection.scanFile(context, oldPathsToScan.toTypedArray(), null, null)
         }
 
         movedCount
+    }
+
+    private fun getRelativePathForFile(file: File): String? {
+        val parent = file.parentFile ?: return null
+        val extDir = Environment.getExternalStorageDirectory()?.absolutePath ?: return null
+        if (parent.absolutePath.startsWith(extDir)) {
+            var rel = parent.absolutePath.removePrefix(extDir).trimStart('/', '\\')
+            if (rel.isNotBlank() && !rel.endsWith("/")) {
+                rel += "/"
+            }
+            return if (rel.isNotBlank()) rel else null
+        }
+        return null
+    }
+
+    fun createMediaItemFromUri(context: Context, uri: Uri, mimeType: String): MediaItem? {
+        return try {
+            val isVideo = mimeType.startsWith("video/")
+            var displayName = ""
+            var sizeBytes: Long = 0L
+            var path = ""
+
+            if (uri.scheme == "file") {
+                val f = File(uri.path ?: "")
+                if (f.exists()) {
+                    return MediaItem(
+                        id = System.currentTimeMillis(),
+                        uri = uri,
+                        path = f.absolutePath,
+                        name = f.name,
+                        dateTaken = f.lastModified(),
+                        isVideo = isVideo,
+                        sizeBytes = f.length()
+                    )
+                }
+            }
+
+            try {
+                val proj = arrayOf(
+                    MediaStore.MediaColumns._ID,
+                    MediaStore.MediaColumns.DISPLAY_NAME,
+                    MediaStore.MediaColumns.SIZE,
+                    MediaStore.MediaColumns.DATA,
+                    MediaStore.MediaColumns.DATE_TAKEN
+                )
+                context.contentResolver.query(uri, proj, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val idIdx = cursor.getColumnIndex(MediaStore.MediaColumns._ID)
+                        val nameIdx = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME)
+                        val sizeIdx = cursor.getColumnIndex(MediaStore.MediaColumns.SIZE)
+                        val dataIdx = cursor.getColumnIndex(MediaStore.MediaColumns.DATA)
+                        val dateIdx = cursor.getColumnIndex(MediaStore.MediaColumns.DATE_TAKEN)
+
+                        val id = if (idIdx != -1) cursor.getLong(idIdx) else System.currentTimeMillis()
+                        displayName = if (nameIdx != -1) cursor.getString(nameIdx) ?: "" else ""
+                        if (sizeIdx != -1) sizeBytes = cursor.getLong(sizeIdx)
+                        if (dataIdx != -1) path = cursor.getString(dataIdx) ?: ""
+                        val date = if (dateIdx != -1) cursor.getLong(dateIdx) else System.currentTimeMillis()
+
+                        return MediaItem(
+                            id = id,
+                            uri = uri,
+                            path = path,
+                            name = displayName.ifBlank { "media_$id" },
+                            dateTaken = if (date > 0) date else System.currentTimeMillis(),
+                            isVideo = isVideo,
+                            sizeBytes = sizeBytes
+                        )
+                    }
+                }
+            } catch (_: Exception) {}
+
+            MediaItem(
+                id = System.currentTimeMillis(),
+                uri = uri,
+                path = path,
+                name = uri.lastPathSegment ?: "media_view",
+                dateTaken = System.currentTimeMillis(),
+                isVideo = isVideo,
+                sizeBytes = sizeBytes
+            )
+        } catch (_: Exception) {
+            null
+        }
     }
 }

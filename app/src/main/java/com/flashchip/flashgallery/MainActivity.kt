@@ -1,4 +1,4 @@
-// Version 1.16 - FlashGallery
+// Version 1.19 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery
@@ -121,6 +121,24 @@ class MainActivity : ComponentActivity() {
             FlashGalleryTheme {
                 FlashGalleryApp(viewModel = viewModel)
             }
+        }
+
+        handleIncomingIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIncomingIntent(intent)
+    }
+
+    private fun handleIncomingIntent(intent: Intent?) {
+        if (intent == null) return
+        val action = intent.action
+        if (action == Intent.ACTION_VIEW) {
+            val uri = intent.data ?: return
+            val type = intent.type ?: contentResolver.getType(uri)
+            viewModel.handleExternalUri(this, uri, type)
         }
     }
 

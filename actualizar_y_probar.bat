@@ -474,6 +474,21 @@ if %errorlevel% equ 0 (
     echo [AVISO] No se pudo completar la release automatica en GitHub.
 )
 
+:: ------------------------------------------------------
+:: 11. RESPALDO AUTOMATICO LIMPIO EN ALMACENAMIENTO Z: (RaiDrive / WebDAV Optimizado)
+:: ------------------------------------------------------
+if not exist "Z:" (
+    echo.
+    echo [AVISO] La unidad Z: no esta montada o RaiDrive no esta ejecutandose. Omitiendo copia a Z:...
+) else (
+    set "DEST_Z=Z:\DIGIstorage\APPs_Atigravity\FlashGallery_APK"
+    if not exist "!DEST_Z!" mkdir "!DEST_Z!" 2>nul
+    echo.
+    echo [INFO] Sincronizando respaldo rapido en Z: (!DEST_Z!)...
+    robocopy "%~dp0." "!DEST_Z!" /E /COPY:D /NODCOPY /MT:16 /FFT /XO /R:0 /W:0 /NP /XD .gradle build app\build .idea .cxx captures /XF local.properties *.iml >nul 2>&1
+    echo [OK] Copia de fuentes y APK sincronizada limpiamente en DIGI Storage (Z:).
+)
+
 echo.
 echo ====================================================
 echo   Proceso completado - FlashGallery !TAG!
