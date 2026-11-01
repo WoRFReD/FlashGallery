@@ -1,7 +1,7 @@
 # 📋 HISTORIAL Y CONTROL DE VERSIONES
 > **Proyecto:** FlashGallery  
 > **Autor:** WoRFReD • **Canal:** FlashChip (https://youtube.com/@flashchiped)  
-> **Versión Actual:** 1.21 • **Código:** 121 • **Fecha de Inicio:** 14/10/2026  
+> **Versión Actual:** 1.22 • **Código:** 122 • **Fecha de Inicio:** 14/10/2026  
 > **Ubicación:** C:\APPs_Atigravity\FlashGallery_APK  
 
 ---
@@ -13,6 +13,16 @@ Cada nueva versión debe documentar sus modificaciones usando estos identificado
 * 🔴 **[CORRECCION]**: Solución de bugs, crashes, cierres inesperados o fallos de compilación.
 * 🔵 **[OPTIMIZACION]**: Reducción de tiempos de carga, memoria, peso de APK o rendimiento.
 * 🟣 **[SEGURIDAD]**: Permisos de Android, firmas, certificados o compatibilidad.
+
+---
+
+## 🚀 Versión 1.22 (Código: 122) — 02/11/2026
+### *Desplazamiento continuo vertical de páginas PDF (Scroll arriba / abajo)*
+
+* 🟢 **[NUEVA_FUNCION]**: Desplazamiento continuo vertical de páginas PDF (Scroll arriba / abajo): sustitución del obsoleto paginador por flechas izquierda/derecha por un lector moderno con LazyColumn que permite deslizarse libremente hacia arriba y hacia abajo por todo el documento.
+* 🔵 **[OPTIMIZACION]**: Caché LRU y renderizado thread-safe con Mutex: decodificación asíncrona de páginas en formato RGB_565 con reserva exacta de dimensiones por relación de aspecto (aspect ratio) para evitar saltos o tirones al deslizar, manteniendo un consumo de memoria mínimo y respuesta a 60/120 FPS.
+* 🟡 **[INTERFAZ]**: Badge flotante de página y selector de salto rápido: nuevo indicador flotante Cyberpunk semi-transparente en la parte inferior ('X / Y') que al pulsarse despliega un deslizador para saltar instantáneamente a cualquier página en PDFs de muchas páginas.
+* 🟡 **[INTERFAZ]**: Gestos táctiles y zoom mejorados: soporte nativo para zoom por pellizco (pinch-to-zoom), desplazamiento libre mientras está ampliado, doble toque para alternar zoom y botón flotante de restablecimiento rápido (1x).
 
 ---
 
