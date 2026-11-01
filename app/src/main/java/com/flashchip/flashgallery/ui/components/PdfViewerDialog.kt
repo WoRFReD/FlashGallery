@@ -1,12 +1,16 @@
-// Version 1.20 - FlashGallery
+// Version 1.21 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.ui.components
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.pdf.PdfRenderer
+import android.media.MediaScannerConnection
+import android.os.Environment
 import android.os.ParcelFileDescriptor
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -35,6 +39,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.OpenInNew
@@ -44,6 +49,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.ZoomOut
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -58,6 +64,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -89,11 +96,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.FileProvider
 import com.flashchip.flashgallery.model.DocItem
 import com.flashchip.flashgallery.ui.theme.BgDark
 import com.flashchip.flashgallery.ui.theme.BorderDark
 import com.flashchip.flashgallery.ui.theme.FlashAmber
 import com.flashchip.flashgallery.ui.theme.FlashCyan
+import com.flashchip.flashgallery.ui.theme.FlashGreen
 import com.flashchip.flashgallery.ui.theme.FlashRed
 import com.flashchip.flashgallery.ui.theme.SurfaceDark
 import com.flashchip.flashgallery.ui.theme.SurfaceDarkVariant
@@ -134,6 +143,8 @@ fun PdfViewerDialog(
     var isPasswordVisible by remember { mutableStateOf(false) }
     var isUnlocking by remember { mutableStateOf(false) }
     var decryptedTempFile by remember { mutableStateOf<File?>(null) }
+    var showShareOptionsDialog by remember { mutableStateOf(false) }
+    var isSavingDecryptedCopy by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     // Zoom y Pan
@@ -212,6 +223,79 @@ fun PdfViewerDialog(
                     isUnlocking = false
                 }
             }
+        }
+    }
+
+    // Guardar copia limpia sin contraseña en la carpeta pública Documentos
+    fun saveDecryptedCopy() {
+        val tempFile = decryptedTempFile ?: return
+        if (isSavingDecryptedCopy) return
+        isSavingDecryptedCopy = true
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                val docsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                if (!docsDir.exists()) {
+                    docsDir.mkdirs()
+                }
+                val rawName = doc.name.substringBeforeLast(".")
+                var targetFile = File(docsDir, "${rawName}_sin_clave.pdf")
+                var counter = 1
+                while (targetFile.exists()) {
+                    targetFile = File(docsDir, "${rawName}_sin_clave_${counter}.pdf")
+                    counter++
+                }
+                tempFile.copyTo(targetFile, overwrite = true)
+                MediaScannerConnection.scanFile(
+                    context,
+                    arrayOf(targetFile.absolutePath),
+                    arrayOf("application/pdf"),
+                    null
+                )
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        context,
+                        "Copia guardada sin clave en Documentos:\n${targetFile.name}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        context,
+                        "Error al guardar copia: ${e.localizedMessage}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } finally {
+                isSavingDecryptedCopy = false
+            }
+        }
+    }
+
+    // Compartir el PDF limpio sin contraseña
+    fun shareDecryptedPdf() {
+        val tempFile = decryptedTempFile ?: return
+        try {
+            val rawName = doc.name.substringBeforeLast(".")
+            val shareFile = File(context.cacheDir, "${rawName}_sin_clave.pdf")
+            tempFile.copyTo(shareFile, overwrite = true)
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                shareFile
+            )
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/pdf"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(Intent.createChooser(shareIntent, "Compartir PDF sin contraseña"))
+        } catch (e: Exception) {
+            Toast.makeText(
+                context,
+                "Error al compartir PDF: ${e.localizedMessage}",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -364,14 +448,36 @@ fun PdfViewerDialog(
 
                     // Acciones
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Botón directo para guardar sin clave si el PDF fue desbloqueado
+                        if (decryptedTempFile != null) {
+                            IconButton(
+                                onClick = { saveDecryptedCopy() },
+                                modifier = Modifier.size(36.dp),
+                                enabled = !isSavingDecryptedCopy
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Download,
+                                    contentDescription = "Guardar copia sin contraseña",
+                                    tint = FlashGreen,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
                         IconButton(
-                            onClick = onShare,
+                            onClick = {
+                                if (decryptedTempFile != null) {
+                                    showShareOptionsDialog = true
+                                } else {
+                                    onShare()
+                                }
+                            },
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Share,
                                 contentDescription = "Compartir",
-                                tint = TextSecondary,
+                                tint = if (decryptedTempFile != null) FlashCyan else TextSecondary,
                                 modifier = Modifier.size(19.dp)
                             )
                         }
@@ -709,6 +815,160 @@ fun PdfViewerDialog(
                         }
                     }
                 }
+            }
+
+            if (showShareOptionsDialog) {
+                AlertDialog(
+                    onDismissRequest = { showShareOptionsDialog = false },
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = null,
+                                tint = FlashCyan,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Compartir documento PDF",
+                                color = TextPrimary,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(
+                                text = "Este documento fue desbloqueado con contraseña. ¿Cómo deseas compartirlo?",
+                                color = TextSecondary,
+                                fontSize = 13.sp
+                            )
+
+                            // Opción 1: Sin contraseña
+                            Surface(
+                                onClick = {
+                                    showShareOptionsDialog = false
+                                    shareDecryptedPdf()
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                color = SurfaceDarkVariant,
+                                border = BorderStroke(1.dp, FlashGreen.copy(alpha = 0.5f)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.LockOpen,
+                                        contentDescription = null,
+                                        tint = FlashGreen,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = "Sin contraseña (Desbloqueado)",
+                                            color = TextPrimary,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = "Genera un PDF limpio listo para abrir directamente",
+                                            color = TextSecondary,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Opción 2: Con contraseña
+                            Surface(
+                                onClick = {
+                                    showShareOptionsDialog = false
+                                    onShare()
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                color = SurfaceDarkVariant,
+                                border = BorderStroke(1.dp, BorderDark),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = null,
+                                        tint = FlashAmber,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = "Con contraseña (Original protegido)",
+                                            color = TextPrimary,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = "Comparte el archivo original con cifrado de seguridad",
+                                            color = TextSecondary,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Opción 3: Guardar en Documentos
+                            Surface(
+                                onClick = {
+                                    showShareOptionsDialog = false
+                                    saveDecryptedCopy()
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                color = SurfaceDarkVariant,
+                                border = BorderStroke(1.dp, BorderDark),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Download,
+                                        contentDescription = null,
+                                        tint = FlashCyan,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = "Guardar copia en Documentos",
+                                            color = TextPrimary,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = "Guarda el PDF sin clave en tu dispositivo",
+                                            color = TextSecondary,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {},
+                    dismissButton = {
+                        TextButton(onClick = { showShareOptionsDialog = false }) {
+                            Text(text = "Cancelar", color = TextSecondary)
+                        }
+                    },
+                    containerColor = SurfaceDark,
+                    shape = RoundedCornerShape(16.dp)
+                )
             }
         }
     }

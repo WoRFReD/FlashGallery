@@ -1,4 +1,4 @@
-// Version 1.20 - FlashGallery
+// Version 1.21 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 plugins {
@@ -14,8 +14,8 @@ android {
         applicationId = "com.flashchip.flashgallery"
         minSdk = 26
         targetSdk = 34
-        versionCode = 120
-        versionName = "1.20"
+        versionCode = 121
+        versionName = "1.21"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

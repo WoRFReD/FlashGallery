@@ -6,8 +6,8 @@
         <Autor>WoRFReD</Autor>
         <Canal>FlashChip</Canal>
         <FechaCreacion>Octubre 2026</FechaCreacion>
-        <VersionActual>1.20</VersionActual>
-        <VersionCodeActual>120</VersionCodeActual>
+        <VersionActual>1.21</VersionActual>
+        <VersionCodeActual>121</VersionCodeActual>
         <UbicacionProyecto>C:\APPs_Atigravity\FlashGallery_APK</UbicacionProyecto>
     </Proyecto>
 
@@ -271,6 +271,18 @@
                 <Cambio tipo="nueva_funcion">Desbloqueo nativo de PDFs protegidos con contraseña: integración del motor de seguridad PDFBox-Android para descifrar documentos protegidos en memoria/caché temporal y visualizarlos inmediatamente con aceleración por hardware en el visor integrado.</Cambio>
                 <Cambio tipo="interfaz">Tarjeta Cyberpunk interactiva de desbloqueo: formulario integrado con campo de contraseña, botón para alternar visibilidad (mostrar/ocultar clave), indicador de carga animado y validación de contraseña incorrecta con reintento inmediato.</Cambio>
                 <Cambio tipo="correccion">Corrección del recorte visual en el botón 'Abrir en visor externo' dentro del visor PDF: reemplazado IconButton con caja fija de 48dp por Button adaptable con icono y texto completo 'Abrir en visor externo'.</Cambio>
+            </Cambios>
+        </Version>
+        <!-- ========================================== -->
+        <!-- Versión 1.21                               -->
+        <!-- ========================================== -->
+        <Version id="1.21" codigo="121">
+            <Fecha>02/11/2026</Fecha>
+            <Titulo>Guardado y compartición de PDFs desbloqueados sin contraseña</Titulo>
+            <Cambios>
+                <Cambio tipo="nueva_funcion">Guardado de copias de PDFs sin contraseña: al desbloquear un PDF protegido, el usuario dispone de un nuevo botón directo de descarga (color verde neón) en la barra superior para guardar una copia limpia sin contraseña en la carpeta pública de 'Documentos' del dispositivo con indexación inmediata en MediaScanner.</Cambio>
+                <Cambio tipo="nueva_funcion">Selector interactivo de compartición con o sin clave: al pulsar el botón compartir en un PDF protegido desbloqueado, se despliega un diálogo emergente estilo Cyberpunk que permite elegir entre compartir el PDF limpio sin contraseña, compartir el archivo original protegido con cifrado, o guardar una copia en Documentos.</Cambio>
+                <Cambio tipo="interfaz">Diálogo Cyberpunk modal de opciones de compartición: tarjetas interactivas con esquinas redondeadas y colores temáticos distintivos (verde neón para copia desbloqueada, ámbar para original protegido y cian para guardado en almacenamiento local).</Cambio>
             </Cambios>
         </Version>
     </HistorialVersiones>

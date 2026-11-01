@@ -1,7 +1,7 @@
 # 📋 HISTORIAL Y CONTROL DE VERSIONES
 > **Proyecto:** FlashGallery  
 > **Autor:** WoRFReD • **Canal:** FlashChip (https://youtube.com/@flashchiped)  
-> **Versión Actual:** 1.20 • **Código:** 120 • **Fecha de Inicio:** 14/10/2026  
+> **Versión Actual:** 1.21 • **Código:** 121 • **Fecha de Inicio:** 14/10/2026  
 > **Ubicación:** C:\APPs_Atigravity\FlashGallery_APK  
 
 ---
@@ -13,6 +13,15 @@ Cada nueva versión debe documentar sus modificaciones usando estos identificado
 * 🔴 **[CORRECCION]**: Solución de bugs, crashes, cierres inesperados o fallos de compilación.
 * 🔵 **[OPTIMIZACION]**: Reducción de tiempos de carga, memoria, peso de APK o rendimiento.
 * 🟣 **[SEGURIDAD]**: Permisos de Android, firmas, certificados o compatibilidad.
+
+---
+
+## 🚀 Versión 1.21 (Código: 121) — 02/11/2026
+### *Guardado y compartición de PDFs desbloqueados sin contraseña*
+
+* 🟢 **[NUEVA_FUNCION]**: Guardado de copias de PDFs sin contraseña: al desbloquear un PDF protegido, el usuario dispone de un nuevo botón directo de descarga (color verde neón) en la barra superior para guardar una copia limpia sin contraseña en la carpeta pública de 'Documentos' del dispositivo con indexación inmediata en MediaScanner.
+* 🟢 **[NUEVA_FUNCION]**: Selector interactivo de compartición con o sin clave: al pulsar el botón compartir en un PDF protegido desbloqueado, se despliega un diálogo emergente estilo Cyberpunk que permite elegir entre compartir el PDF limpio sin contraseña, compartir el archivo original protegido con cifrado, o guardar una copia en Documentos.
+* 🟡 **[INTERFAZ]**: Diálogo Cyberpunk modal de opciones de compartición: tarjetas interactivas con esquinas redondeadas y colores temáticos distintivos (verde neón para copia desbloqueada, ámbar para original protegido y cian para guardado en almacenamiento local).
 
 ---
 
