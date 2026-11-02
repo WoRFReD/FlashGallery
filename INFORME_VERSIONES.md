@@ -1,7 +1,7 @@
 # 📋 HISTORIAL Y CONTROL DE VERSIONES
 > **Proyecto:** FlashGallery  
 > **Autor:** WoRFReD • **Canal:** FlashChip (https://youtube.com/@flashchiped)  
-> **Versión Actual:** 1.22 • **Código:** 122 • **Fecha de Inicio:** 14/10/2026  
+> **Versión Actual:** 1.23 • **Código:** 123 • **Fecha de Inicio:** 14/10/2026  
 > **Ubicación:** C:\APPs_Atigravity\FlashGallery_APK  
 
 ---
@@ -13,6 +13,14 @@ Cada nueva versión debe documentar sus modificaciones usando estos identificado
 * 🔴 **[CORRECCION]**: Solución de bugs, crashes, cierres inesperados o fallos de compilación.
 * 🔵 **[OPTIMIZACION]**: Reducción de tiempos de carga, memoria, peso de APK o rendimiento.
 * 🟣 **[SEGURIDAD]**: Permisos de Android, firmas, certificados o compatibilidad.
+
+---
+
+## 🚀 Versión 1.23 (Código: 123) — 02/11/2026
+### *Corrección crítica en renderizado nativo de páginas PDF (ARGB_8888)*
+
+* 🔴 **[CORRECCION]**: Corrección crítica en el renderizado de páginas PDF: solución al problema de páginas en blanco con indicador de carga indefinido provocado por el formato RGB_565 no soportado por el motor nativo de Android (PdfRenderer exige estrictamente Bitmap.Config.ARGB_8888) y eliminación de la colisión de hilos (race condition) al sincronizar la lectura de dimensiones bajo Mutex.
+* 🔵 **[OPTIMIZACION]**: Resolución adaptativa al ancho físico de pantalla: ajuste dinámico de resolución por pantalla (de 720 a 1440 píxeles) manteniendo nitidez cristalina y eliminando sobreconsumo de memoria RAM al deslizar rápidamente entre páginas.
 
 ---
 

@@ -1,4 +1,4 @@
-// Version 1.22 - FlashGallery
+// Version 1.23 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.ui.components
@@ -141,8 +141,8 @@ fun PdfViewerDialog(
     var pageCount by remember { mutableIntStateOf(0) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Lista de dimensiones (ancho, alto) de cada página para reservar espacio exacto
-    var pageDimensions by remember(renderer) { mutableStateOf<List<Pair<Int, Int>>>(emptyList()) }
+    // Relación de aspecto por defecto del documento (ancho / alto)
+    var defaultAspectRatio by remember(renderer) { mutableFloatStateOf(0.707f) }
 
     // Estado del listado y página visible en tiempo real durante el scroll vertical
     val listState = rememberLazyListState()
@@ -153,7 +153,7 @@ fun PdfViewerDialog(
     }
 
     // Caché LRU de páginas y Mutex para acceso concurrente seguro a PdfRenderer
-    val pageCache = remember { object : LruCache<Int, Bitmap>(16) {} }
+    val pageCache = remember { object : LruCache<Int, Bitmap>(12) {} }
     val renderMutex = remember { Mutex() }
 
     // Estado para contraseñas de PDFs protegidos
@@ -182,22 +182,19 @@ fun PdfViewerDialog(
         }
     }
 
-    // Cargar dimensiones de todas las páginas de forma asíncrona
+    // Pre-leer la proporción de aspecto de la primera página bajo Mutex thread-safe
     LaunchedEffect(renderer) {
         val r = renderer ?: return@LaunchedEffect
         withContext(Dispatchers.IO) {
-            val list = ArrayList<Pair<Int, Int>>(r.pageCount)
-            for (i in 0 until r.pageCount) {
+            renderMutex.withLock {
                 try {
-                    val p = r.openPage(i)
-                    list.add(Pair(p.width, p.height))
+                    val p = r.openPage(0)
+                    val ratio = if (p.height > 0) p.width.toFloat() / p.height.toFloat() else 0.707f
                     p.close()
-                } catch (_: Exception) {
-                    list.add(Pair(595, 842))
-                }
-            }
-            withContext(Dispatchers.Main) {
-                pageDimensions = list
+                    withContext(Dispatchers.Main) {
+                        defaultAspectRatio = ratio
+                    }
+                } catch (_: Exception) {}
             }
         }
     }
@@ -811,7 +808,7 @@ fun PdfViewerDialog(
                             items(pageCount) { pageIndex ->
                                 PdfPageItem(
                                     pageIndex = pageIndex,
-                                    dimension = pageDimensions.getOrNull(pageIndex) ?: Pair(595, 842),
+                                    defaultAspectRatio = defaultAspectRatio,
                                     renderer = renderer,
                                     renderMutex = renderMutex,
                                     pageCache = pageCache
@@ -1109,7 +1106,7 @@ fun PdfViewerDialog(
 @Composable
 private fun PdfPageItem(
     pageIndex: Int,
-    dimension: Pair<Int, Int>,
+    defaultAspectRatio: Float,
     renderer: PdfRenderer?,
     renderMutex: Mutex,
     pageCache: LruCache<Int, Bitmap>,
@@ -1117,6 +1114,7 @@ private fun PdfPageItem(
 ) {
     val context = LocalContext.current
     var bitmap by remember(pageIndex, renderer) { mutableStateOf<Bitmap?>(pageCache.get(pageIndex)) }
+    var pageAspectRatio by remember(pageIndex, defaultAspectRatio) { mutableFloatStateOf(defaultAspectRatio) }
 
     LaunchedEffect(pageIndex, renderer) {
         if (bitmap == null && renderer != null) {
@@ -1125,6 +1123,9 @@ private fun PdfPageItem(
                 if (cached != null) {
                     withContext(Dispatchers.Main) {
                         bitmap = cached
+                        if (cached.height > 0) {
+                            pageAspectRatio = cached.width.toFloat() / cached.height.toFloat()
+                        }
                     }
                     return@withContext
                 }
@@ -1134,6 +1135,9 @@ private fun PdfPageItem(
                     if (cachedInside != null) {
                         withContext(Dispatchers.Main) {
                             bitmap = cachedInside
+                            if (cachedInside.height > 0) {
+                                pageAspectRatio = cachedInside.width.toFloat() / cachedInside.height.toFloat()
+                            }
                         }
                         return@withLock
                     }
@@ -1141,15 +1145,20 @@ private fun PdfPageItem(
                     try {
                         val page = renderer.openPage(pageIndex)
                         val screenPx = context.resources.displayMetrics.widthPixels
-                        val targetWidth = (screenPx * 1.5f).toInt().coerceIn(1080, 1800)
+                        val targetWidth = screenPx.coerceIn(720, 1440)
                         val targetHeight = (targetWidth.toFloat() / page.width * page.height).toInt()
-                        val bmp = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.RGB_565)
+                        val ratio = if (page.height > 0) page.width.toFloat() / page.height.toFloat() else defaultAspectRatio
+
+                        // Android PdfRenderer exige estrictamente Bitmap.Config.ARGB_8888
+                        val bmp = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
                         val canvas = Canvas(bmp)
                         canvas.drawColor(android.graphics.Color.WHITE)
                         page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                         page.close()
+
                         pageCache.put(pageIndex, bmp)
                         withContext(Dispatchers.Main) {
+                            pageAspectRatio = ratio
                             bitmap = bmp
                         }
                     } catch (e: Exception) {
@@ -1160,13 +1169,10 @@ private fun PdfPageItem(
         }
     }
 
-    val (w, h) = dimension
-    val aspectRatio = if (h > 0) w.toFloat() / h.toFloat() else 0.707f
-
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(aspectRatio)
+            .aspectRatio(pageAspectRatio)
             .clip(RoundedCornerShape(4.dp))
             .background(Color.White),
         contentAlignment = Alignment.Center

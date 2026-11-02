@@ -6,8 +6,8 @@
         <Autor>WoRFReD</Autor>
         <Canal>FlashChip</Canal>
         <FechaCreacion>Octubre 2026</FechaCreacion>
-        <VersionActual>1.22</VersionActual>
-        <VersionCodeActual>122</VersionCodeActual>
+        <VersionActual>1.23</VersionActual>
+        <VersionCodeActual>123</VersionCodeActual>
         <UbicacionProyecto>C:\APPs_Atigravity\FlashGallery_APK</UbicacionProyecto>
     </Proyecto>
 
@@ -293,9 +293,20 @@
             <Titulo>Desplazamiento continuo vertical de páginas PDF (Scroll arriba / abajo)</Titulo>
             <Cambios>
                 <Cambio tipo="nueva_funcion">Desplazamiento continuo vertical de páginas PDF (Scroll arriba / abajo): sustitución del obsoleto paginador por flechas izquierda/derecha por un lector moderno con LazyColumn que permite deslizarse libremente hacia arriba y hacia abajo por todo el documento.</Cambio>
-                <Cambio tipo="optimizacion">Caché LRU y renderizado thread-safe con Mutex: decodificación asíncrona de páginas en formato RGB_565 con reserva exacta de dimensiones por relación de aspecto (aspect ratio) para evitar saltos o tirones al deslizar, manteniendo un consumo de memoria mínimo y respuesta a 60/120 FPS.</Cambio>
+                <Cambio tipo="optimizacion">Caché LRU y renderizado thread-safe con Mutex: decodificación asíncrona de páginas con reserva exacta de dimensiones por relación de aspecto (aspect ratio) para evitar saltos o tirones al deslizar, manteniendo un consumo de memoria mínimo y respuesta a 60/120 FPS.</Cambio>
                 <Cambio tipo="interfaz">Badge flotante de página y selector de salto rápido: nuevo indicador flotante Cyberpunk semi-transparente en la parte inferior ('X / Y') que al pulsarse despliega un deslizador para saltar instantáneamente a cualquier página en PDFs de muchas páginas.</Cambio>
                 <Cambio tipo="interfaz">Gestos táctiles y zoom mejorados: soporte nativo para zoom por pellizco (pinch-to-zoom), desplazamiento libre mientras está ampliado, doble toque para alternar zoom y botón flotante de restablecimiento rápido (1x).</Cambio>
+            </Cambios>
+        </Version>
+        <!-- ========================================== -->
+        <!-- Versión 1.23                               -->
+        <!-- ========================================== -->
+        <Version id="1.23" codigo="123">
+            <Fecha>02/11/2026</Fecha>
+            <Titulo>Corrección crítica en renderizado nativo de páginas PDF (ARGB_8888)</Titulo>
+            <Cambios>
+                <Cambio tipo="correccion">Corrección crítica en el renderizado de páginas PDF: solución al problema de páginas en blanco con indicador de carga indefinido provocado por el formato RGB_565 no soportado por el motor nativo de Android (PdfRenderer exige estrictamente Bitmap.Config.ARGB_8888) y eliminación de la colisión de hilos (race condition) al sincronizar la lectura de dimensiones bajo Mutex.</Cambio>
+                <Cambio tipo="optimizacion">Resolución adaptativa al ancho físico de pantalla: ajuste dinámico de resolución por pantalla (de 720 a 1440 píxeles) manteniendo nitidez cristalina y eliminando sobreconsumo de memoria RAM al deslizar rápidamente entre páginas.</Cambio>
             </Cambios>
         </Version>
     </HistorialVersiones>
