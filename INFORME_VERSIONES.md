@@ -1,7 +1,7 @@
 # 📋 HISTORIAL Y CONTROL DE VERSIONES
 > **Proyecto:** FlashGallery  
 > **Autor:** WoRFReD • **Canal:** FlashChip (https://youtube.com/@flashchiped)  
-> **Versión Actual:** 1.23 • **Código:** 123 • **Fecha de Inicio:** 14/10/2026  
+> **Versión Actual:** 1.24 • **Código:** 124 • **Fecha de Inicio:** 14/10/2026  
 > **Ubicación:** C:\APPs_Atigravity\FlashGallery_APK  
 
 ---
@@ -13,6 +13,18 @@ Cada nueva versión debe documentar sus modificaciones usando estos identificado
 * 🔴 **[CORRECCION]**: Solución de bugs, crashes, cierres inesperados o fallos de compilación.
 * 🔵 **[OPTIMIZACION]**: Reducción de tiempos de carga, memoria, peso de APK o rendimiento.
 * 🟣 **[SEGURIDAD]**: Permisos de Android, firmas, certificados o compatibilidad.
+
+---
+
+## 🚀 Versión 1.24 (Código: 124) — 02/11/2026
+### *Editor de Fotos Integrado: censura por pixelado, flechas de marcado, rotación y modo documento*
+
+* 🟢 **[NUEVA_FUNCION]**: Editor de Fotos integrado de alta velocidad (PhotoEditorDialog): nueva herramienta nativa accesible directamente desde el visor de fotos con anotaciones, marcado, censura y filtros sin necesidad de apps externas.
+* 🟢 **[NUEVA_FUNCION]**: Censura y privacidad rápida: herramientas de pixelado/mosaico con el dedo para tapar caras, matrículas o DNI, y rotulador de tachado negro opaco para proteger datos confidenciales antes de compartir.
+* 🟢 **[NUEVA_FUNCION]**: Marcado y señalización: dibujo libre, flechas inteligentes automáticas para destacar fallos o detalles, y recuadros de selección con paleta de colores Cyberpunk neón (Cian, Ámbar, Verde, Rojo, Blanco, Negro) y 3 niveles de grosor.
+* 🟢 **[NUEVA_FUNCION]**: Filtro Modo Documento / Escáner: conversión a blanco y negro de alto contraste que limpia fondos grises y sombras en fotos de tickets, facturas o pizarras dejando el texto ultra legible.
+* 🟢 **[NUEVA_FUNCION]**: Giro, espejo y redimensionado: rotación rápida de 90° en 90°, efecto espejo horizontal y exportación opcional en 1080p o 720p para compartir rápido sin gastar datos.
+* 🔵 **[OPTIMIZACION]**: Guardado no destructivo: guarda siempre una copia en Pictures/FlashGallery manteniendo intacta la foto original, con indexación inmediata en MediaScanner.
 
 ---
 

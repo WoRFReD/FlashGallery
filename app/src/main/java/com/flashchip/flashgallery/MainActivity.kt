@@ -642,7 +642,8 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
             initialIndex = uiState.viewerInitialIndex,
             onDismiss = { viewModel.openViewer(null) },
             onShowExif = { item -> viewModel.loadExif(item) },
-            onDelete = { item -> viewModel.deleteViewerItem(item) }
+            onDelete = { item -> viewModel.deleteViewerItem(item) },
+            onRefresh = { viewModel.refreshAll() }
         )
     }
 

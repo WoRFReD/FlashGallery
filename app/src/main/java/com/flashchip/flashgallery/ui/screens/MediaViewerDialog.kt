@@ -1,4 +1,4 @@
-// Version 1.17 - FlashGallery
+// Version 1.24 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.ui.screens
@@ -42,9 +42,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DocumentScanner
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
+import com.flashchip.flashgallery.ui.components.PhotoEditorDialog
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -110,7 +112,8 @@ fun MediaViewerDialog(
     initialIndex: Int,
     onDismiss: () -> Unit,
     onShowExif: (MediaItem) -> Unit,
-    onDelete: (MediaItem) -> Unit
+    onDelete: (MediaItem) -> Unit,
+    onRefresh: () -> Unit = {}
 ) {
     if (mediaList.isEmpty()) {
         onDismiss()
@@ -121,6 +124,7 @@ fun MediaViewerDialog(
     val coroutineScope = rememberCoroutineScope()
     var showControls by remember { mutableStateOf(true) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showPhotoEditor by remember { mutableStateOf(false) }
 
     // Estados para la hoja de información EXIF detallada integrada
     var showExifSheet by remember { mutableStateOf(false) }
@@ -359,6 +363,16 @@ fun MediaViewerDialog(
                                 tint = FlashCyan
                             )
                         }
+
+                        IconButton(
+                            onClick = { showPhotoEditor = true }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Editar foto",
+                                tint = FlashCyan
+                            )
+                        }
                     }
 
                     // Botón Información EXIF Detallada
@@ -494,6 +508,18 @@ fun MediaViewerDialog(
                     scanResult = ocrScanResult!!,
                     initialSelectedText = selectedOcrText,
                     onDismiss = { showOcrSheet = false }
+                )
+            }
+
+            // Editor de fotos integrado (FlashChip Photo Editor)
+            if (showPhotoEditor && currentItem != null && !currentItem.isVideo) {
+                PhotoEditorDialog(
+                    item = currentItem,
+                    onDismiss = { showPhotoEditor = false },
+                    onSaved = {
+                        showPhotoEditor = false
+                        onRefresh()
+                    }
                 )
             }
         }

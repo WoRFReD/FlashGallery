@@ -6,8 +6,8 @@
         <Autor>WoRFReD</Autor>
         <Canal>FlashChip</Canal>
         <FechaCreacion>Octubre 2026</FechaCreacion>
-        <VersionActual>1.23</VersionActual>
-        <VersionCodeActual>123</VersionCodeActual>
+        <VersionActual>1.24</VersionActual>
+        <VersionCodeActual>124</VersionCodeActual>
         <UbicacionProyecto>C:\APPs_Atigravity\FlashGallery_APK</UbicacionProyecto>
     </Proyecto>
 
@@ -307,6 +307,21 @@
             <Cambios>
                 <Cambio tipo="correccion">Corrección crítica en el renderizado de páginas PDF: solución al problema de páginas en blanco con indicador de carga indefinido provocado por el formato RGB_565 no soportado por el motor nativo de Android (PdfRenderer exige estrictamente Bitmap.Config.ARGB_8888) y eliminación de la colisión de hilos (race condition) al sincronizar la lectura de dimensiones bajo Mutex.</Cambio>
                 <Cambio tipo="optimizacion">Resolución adaptativa al ancho físico de pantalla: ajuste dinámico de resolución por pantalla (de 720 a 1440 píxeles) manteniendo nitidez cristalina y eliminando sobreconsumo de memoria RAM al deslizar rápidamente entre páginas.</Cambio>
+            </Cambios>
+        </Version>
+        <!-- ========================================== -->
+        <!-- Versión 1.24                               -->
+        <!-- ========================================== -->
+        <Version id="1.24" codigo="124">
+            <Fecha>02/11/2026</Fecha>
+            <Titulo>Editor de Fotos Integrado: censura por pixelado, flechas de marcado, rotación y modo documento</Titulo>
+            <Cambios>
+                <Cambio tipo="nueva_funcion">Editor de Fotos integrado de alta velocidad (PhotoEditorDialog): nueva herramienta nativa accesible directamente desde el visor de fotos con anotaciones, marcado, censura y filtros sin necesidad de apps externas.</Cambio>
+                <Cambio tipo="nueva_funcion">Censura y privacidad rápida: herramientas de pixelado/mosaico con el dedo para tapar caras, matrículas o DNI, y rotulador de tachado negro opaco para proteger datos confidenciales antes de compartir.</Cambio>
+                <Cambio tipo="nueva_funcion">Marcado y señalización: dibujo libre, flechas inteligentes automáticas para destacar fallos o detalles, y recuadros de selección con paleta de colores Cyberpunk neón (Cian, Ámbar, Verde, Rojo, Blanco, Negro) y 3 niveles de grosor.</Cambio>
+                <Cambio tipo="nueva_funcion">Filtro Modo Documento / Escáner: conversión a blanco y negro de alto contraste que limpia fondos grises y sombras en fotos de tickets, facturas o pizarras dejando el texto ultra legible.</Cambio>
+                <Cambio tipo="nueva_funcion">Giro, espejo y redimensionado: rotación rápida de 90° en 90°, efecto espejo horizontal y exportación opcional en 1080p o 720p para compartir rápido sin gastar datos.</Cambio>
+                <Cambio tipo="optimizacion">Guardado no destructivo: guarda siempre una copia en Pictures/FlashGallery manteniendo intacta la foto original, con indexación inmediata en MediaScanner.</Cambio>
             </Cambios>
         </Version>
     </HistorialVersiones>

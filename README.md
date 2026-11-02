@@ -1,4 +1,4 @@
-# ⚡ FlashGallery v1.23
+# ⚡ FlashGallery v1.24
 
 [![Release](https://img.shields.io/github/v/release/WoRFReD/FlashGallery?color=00e5ff&label=Release&logo=github)](https://github.com/WoRFReD/FlashGallery/releases/latest)
 [![Android](https://img.shields.io/badge/Android-8.0%2B%20(API%2026%2B)-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
