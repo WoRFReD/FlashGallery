@@ -14,8 +14,8 @@ android {
         applicationId = "com.flashchip.flashgallery"
         minSdk = 26
         targetSdk = 34
-        versionCode = 126
-        versionName = "1.26"
+        versionCode = 127
+        versionName = "1.27"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

@@ -1,9 +1,13 @@
-// Version 1.26 - FlashGallery
+// Version 1.27 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.ui.screens
 
+import android.app.Activity
+import android.content.ContextWrapper
 import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.widget.Toast
 import kotlin.OptIn
 import androidx.activity.compose.BackHandler
@@ -34,8 +38,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
@@ -51,6 +57,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RotateRight
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Share
 import com.flashchip.flashgallery.ui.components.PhotoEditorDialog
 import androidx.compose.material3.AlertDialog
@@ -150,6 +157,27 @@ fun MediaViewerDialog(
     val safeInitialIndex = initialIndex.coerceIn(0, mediaList.size - 1)
     val pagerState = rememberPagerState(initialPage = safeInitialIndex) { mediaList.size }
 
+    // Detección segura de Activity para rotación de pantalla
+    val activity = remember(context) {
+        var ctx = context
+        while (ctx is ContextWrapper) {
+            if (ctx is Activity) return@remember ctx
+            ctx = ctx.baseContext
+        }
+        null
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
+
+    val safeDismiss = {
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        onDismiss()
+    }
+
     // Nivel de zoom de la foto actual (1f = tamaño original, >1f = ampliado)
     var currentPhotoScale by remember { mutableFloatStateOf(1f) }
 
@@ -231,7 +259,7 @@ fun MediaViewerDialog(
             } else if (showExifSheet) {
                 showExifSheet = false
             } else {
-                onDismiss()
+                safeDismiss()
             }
         },
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -244,7 +272,7 @@ fun MediaViewerDialog(
             showExifSheet = false
         }
         BackHandler(enabled = !showExifSheet && !showOcrSheet) {
-            onDismiss()
+            safeDismiss()
         }
 
         Box(
@@ -309,7 +337,7 @@ fun MediaViewerDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
-                        onClick = onDismiss,
+                        onClick = safeDismiss,
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
@@ -391,6 +419,24 @@ fun MediaViewerDialog(
                             )
                         }
                     } else {
+                        // Botón Forzar Pantalla Horizontal / Vertical (Pantalla completa automática)
+                        IconButton(
+                            onClick = {
+                                val currentOrient = context.resources.configuration.orientation
+                                if (currentOrient == Configuration.ORIENTATION_PORTRAIT) {
+                                    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                                } else {
+                                    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ScreenRotation,
+                                contentDescription = "Rotar orientación de pantalla",
+                                tint = FlashCyan
+                            )
+                        }
+
                         // Botón Girar Vídeo 90° (Opción A)
                         IconButton(
                             onClick = {
@@ -799,7 +845,8 @@ private fun PhotoViewerPage(
 
 /**
  * Página para reproducir un vídeo con ExoPlayer sin atrapar los gestos de deslizamiento lateral
- * Permite rotación al vuelo (0°, 90°, 180°, 270°) adaptando el tamaño del lienzo
+ * Permite rotación al vuelo (0°, 90°, 180°, 270°) adaptando matemáticamente el lienzo
+ * para ocupar el 100% del área de pantalla disponible sin bandas negras artificiales.
  */
 @OptIn(UnstableApi::class)
 @Composable
@@ -812,12 +859,34 @@ private fun VideoPlayerPage(
     val context = LocalContext.current
     var isPlaying by remember { mutableStateOf(false) }
 
+    var videoWidth by remember(item.uri) {
+        mutableIntStateOf(if (item.width > 0) item.width else 1080)
+    }
+    var videoHeight by remember(item.uri) {
+        mutableIntStateOf(if (item.height > 0) item.height else 1920)
+    }
+
     val exoPlayer = remember(item.uri) {
         ExoPlayer.Builder(context).build().apply {
             val exoItem = ExoMediaItem.fromUri(item.uri)
             setMediaItem(exoItem)
             prepare()
             playWhenReady = false
+        }
+    }
+
+    DisposableEffect(exoPlayer) {
+        val listener = object : androidx.media3.common.Player.Listener {
+            override fun onVideoSizeChanged(videoSize: androidx.media3.common.VideoSize) {
+                if (videoSize.width > 0 && videoSize.height > 0) {
+                    videoWidth = videoSize.width
+                    videoHeight = videoSize.height
+                }
+            }
+        }
+        exoPlayer.addListener(listener)
+        onDispose {
+            exoPlayer.removeListener(listener)
         }
     }
 
@@ -834,6 +903,8 @@ private fun VideoPlayerPage(
         }
     }
 
+    var isFillZoom by remember { mutableStateOf(false) }
+
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
@@ -848,18 +919,61 @@ private fun VideoPlayerPage(
                             isPlaying = true
                         }
                         onTap()
+                    },
+                    onDoubleTap = {
+                        isFillZoom = !isFillZoom
                     }
                 )
             },
         contentAlignment = Alignment.Center
     ) {
-        val isRotatedSideways = rotationDegrees % 180 != 0
-        val targetWidth = if (isRotatedSideways) maxHeight else maxWidth
-        val targetHeight = if (isRotatedSideways) maxWidth else maxHeight
+        val rawW = videoWidth.toFloat()
+        val rawH = videoHeight.toFloat().coerceAtLeast(1f)
+        val rawAspect = rawW / rawH
+
+        val isSideways = rotationDegrees % 180 != 0
+        // Al rotar 90° o 270°, la orientación visual efectiva del contenido se invierte
+        val visualAspect = if (isSideways) (1f / rawAspect) else rawAspect
+
+        val containerW = maxWidth.value
+        val containerH = maxHeight.value
+        val containerAspect = containerW / containerH.coerceAtLeast(1f)
+
+        // Dimensiones visuales máximas en pantalla (sin bandas negras innecesarias)
+        val (visualW, visualH) = if (isFillZoom) {
+            // Llenar pantalla completa (zoom crop para cubrir el 100% de la pantalla)
+            if (containerAspect > visualAspect) {
+                val w = containerW
+                val h = containerW / visualAspect
+                Pair(w, h)
+            } else {
+                val h = containerH
+                val w = containerH * visualAspect
+                Pair(w, h)
+            }
+        } else {
+            // Ajustar al área visible manteniendo toda la imagen visible
+            if (containerAspect > visualAspect) {
+                val h = containerH
+                val w = containerH * visualAspect
+                Pair(w, h)
+            } else {
+                val w = containerW
+                val h = containerW / visualAspect
+                Pair(w, h)
+            }
+        }
+
+        // El Box previo a rotar: si está rotado 90° o 270°, ancho y alto se intercambian
+        // para que la caja interna tenga exactamente la misma relación de aspecto nativa del vídeo (rawAspect).
+        // wrapContentSize(unbounded = true) + requiredSize evita que Compose lo recorte antes de aplicar la rotación.
+        val boxW = if (isSideways) visualH.dp else visualW.dp
+        val boxH = if (isSideways) visualW.dp else visualH.dp
 
         Box(
             modifier = Modifier
-                .size(targetWidth, targetHeight)
+                .wrapContentSize(unbounded = true)
+                .requiredSize(boxW, boxH)
                 .graphicsLayer {
                     rotationZ = rotationDegrees.toFloat()
                 },
@@ -869,7 +983,8 @@ private fun VideoPlayerPage(
                 factory = { ctx ->
                     PlayerView(ctx).apply {
                         player = exoPlayer
-                        useController = false // Evita que PlayerView capture los gestos táctiles horizontales
+                        useController = false
+                        resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL
                     }
                 },
                 modifier = Modifier.fillMaxSize()

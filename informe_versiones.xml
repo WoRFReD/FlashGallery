@@ -6,8 +6,8 @@
         <Autor>WoRFReD</Autor>
         <Canal>FlashChip</Canal>
         <FechaCreacion>Octubre 2026</FechaCreacion>
-        <VersionActual>1.26</VersionActual>
-        <VersionCodeActual>126</VersionCodeActual>
+        <VersionActual>1.27</VersionActual>
+        <VersionCodeActual>127</VersionCodeActual>
         <UbicacionProyecto>C:\APPs_Atigravity\FlashGallery_APK</UbicacionProyecto>
     </Proyecto>
 
@@ -348,6 +348,19 @@
                 <Cambio tipo="nueva_funcion">Corrección de orientación MP4 sin recodificar (VideoRotationHelper): permite guardar una copia del vídeo con la rotación corregida modificando únicamente los 36 bytes de la matriz de orientación del contenedor (tkhd box) con MediaExtractor y MediaMuxer.</Cambio>
                 <Cambio tipo="optimizacion">Cero pérdida de calidad y velocidad ultrarrápida: al no pasar por transcodificación H.264/H.265 ni decodificar fotogramas, procesa vídeos en menos de 0.5 segundos sin consumir batería ni degradar la nitidez.</Cambio>
                 <Cambio tipo="interfaz">Barra flotante Cyberpunk con previsualización de ángulo y botón "Guardar MP4": aparece suavemente cuando se rota un vídeo para guardar directamente la copia en Movies/FlashGallery con indexación en MediaScanner.</Cambio>
+            </Cambios>
+        </Version>
+        <!-- ========================================== -->
+        <!-- Versión 1.27                               -->
+        <!-- ========================================== -->
+        <Version id="1.27" codigo="127">
+            <Fecha>23/11/2026</Fecha>
+            <Titulo>Ajuste matemático de rotación de vídeo a pantalla completa y botón de orientación</Titulo>
+            <Cambios>
+                <Cambio tipo="correccion">Solución al recorte y reducción excesiva de tamaño del vídeo al rotar: eliminación del clamping de Compose (wrapContentSize(unbounded = true) + requiredSize) y cálculo exacto de la relación de aspecto visual inversa, haciendo que el vídeo rotado ocupe el 100% de la altura o anchura disponible tanto en vertical como en horizontal.</Cambio>
+                <Cambio tipo="nueva_funcion">Botón de orientación de pantalla (ScreenRotation): nuevo botón en la barra superior del reproductor que permite alternar la app entre horizontal (Landscape) y vertical (Portrait) con un solo toque, sin depender del sensor ni del bloqueo de auto-rotación de Android.</Cambio>
+                <Cambio tipo="nueva_funcion">Doble toque para alternar entre "Ajustar" y "Llenar pantalla completa": el doble toque sobre el vídeo ahora alterna entre ajuste proporcional (con barras mínimas si no coincide el ratio) y zoom completo sin bandas negras (Fill Zoom).</Cambio>
+                <Cambio tipo="optimizacion">Restablecimiento automático de orientación: al salir del visor de fotos/vídeos (onDismiss), la orientación de pantalla del móvil vuelve inmediatamente a su estado normal sin afectar al resto de la app.</Cambio>
             </Cambios>
         </Version>
     </HistorialVersiones>

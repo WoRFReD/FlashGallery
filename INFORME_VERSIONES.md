@@ -1,7 +1,7 @@
 # 📋 HISTORIAL Y CONTROL DE VERSIONES
 > **Proyecto:** FlashGallery  
 > **Autor:** WoRFReD • **Canal:** FlashChip (https://youtube.com/@flashchiped)  
-> **Versión Actual:** 1.26 • **Código:** 126 • **Fecha de Inicio:** 14/10/2026  
+> **Versión Actual:** 1.27 • **Código:** 127 • **Fecha de Inicio:** 14/10/2026  
 > **Ubicación:** C:\APPs_Atigravity\FlashGallery_APK  
 
 ---
@@ -13,6 +13,16 @@ Cada nueva versión debe documentar sus modificaciones usando estos identificado
 * 🔴 **[CORRECCION]**: Solución de bugs, crashes, cierres inesperados o fallos de compilación.
 * 🔵 **[OPTIMIZACION]**: Reducción de tiempos de carga, memoria, peso de APK o rendimiento.
 * 🟣 **[SEGURIDAD]**: Permisos de Android, firmas, certificados o compatibilidad.
+
+---
+
+## 🚀 Versión 1.27 (Código: 127) — 23/11/2026
+### *Ajuste matemático de rotación de vídeo a pantalla completa y botón de orientación*
+
+* 🔴 **[CORRECCION]**: Solución al recorte y reducción excesiva de tamaño del vídeo al rotar: eliminación del clamping de Compose (`wrapContentSize(unbounded = true) + requiredSize`) y cálculo exacto de la relación de aspecto visual inversa, haciendo que el vídeo rotado ocupe el 100% de la altura o anchura disponible tanto en vertical como en horizontal.
+* 🟢 **[NUEVA_FUNCION]**: Botón de orientación de pantalla (ScreenRotation): nuevo botón en la barra superior del reproductor que permite alternar la app entre horizontal (Landscape) y vertical (Portrait) con un solo toque, sin depender del sensor ni del bloqueo de auto-rotación de Android.
+* 🟢 **[NUEVA_FUNCION]**: Doble toque para alternar entre "Ajustar" y "Llenar pantalla completa": el doble toque sobre el vídeo ahora alterna entre ajuste proporcional (con barras mínimas si no coincide el ratio) y zoom completo sin bandas negras (Fill Zoom).
+* 🔵 **[OPTIMIZACION]**: Restablecimiento automático de orientación: al salir del visor de fotos/vídeos (`onDismiss`), la orientación de pantalla del móvil vuelve inmediatamente a su estado normal sin afectar al resto de la app.
 
 ---
 
