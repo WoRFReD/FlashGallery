@@ -1,4 +1,4 @@
-// Version 1.19 - FlashGallery
+// Version 1.25 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.viewmodel
@@ -37,6 +37,7 @@ data class MainUiState(
     val selectedAppFolder: AppFolder? = null,
     val gridColumns: Int = 3,
     val selectedMediaIds: Set<Long> = emptySet(),
+    val lastSelectedMediaId: Long? = null,
     val isSelectionMode: Boolean = false,
     val activeViewerItem: MediaItem? = null,
     val viewerMediaList: List<MediaItem> = emptyList(),
@@ -184,16 +185,79 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleSelectMedia(item: MediaItem) {
         _uiState.update { state ->
             val set = state.selectedMediaIds.toMutableSet()
+            val newAnchor: Long?
             if (set.contains(item.id)) {
                 set.remove(item.id)
+                newAnchor = if (state.lastSelectedMediaId == item.id) {
+                    set.lastOrNull()
+                } else {
+                    state.lastSelectedMediaId
+                }
             } else {
                 set.add(item.id)
+                newAnchor = item.id
             }
             state.copy(
                 selectedMediaIds = set,
+                lastSelectedMediaId = if (set.isNotEmpty()) newAnchor else null,
                 isSelectionMode = set.isNotEmpty()
             )
         }
+    }
+
+    /**
+     * Selección por rango ("Desde aquí hasta allí" / Shift-Click táctil)
+     * Selecciona todos los elementos existentes entre el último elemento seleccionado (ancla)
+     * y el elemento de destino [targetItem].
+     * @return El número de elementos seleccionados en el rango.
+     */
+    fun selectMediaRangeTo(targetItem: MediaItem): Int {
+        var rangeCount = 0
+        _uiState.update { state ->
+            val currentList: List<MediaItem> = if (state.selectedAppFolder != null) {
+                state.selectedAppFolder.items
+            } else {
+                state.timelineItems.filterIsInstance<GalleryItem.Media>().map { it.item }
+            }
+
+            val targetIndex = currentList.indexOfFirst { it.id == targetItem.id }
+            if (targetIndex == -1) return@update state
+
+            val anchorId = state.lastSelectedMediaId
+            val anchorIndex = if (anchorId != null) {
+                currentList.indexOfFirst { it.id == anchorId }
+            } else -1
+
+            val fromIndex: Int
+            val toIndex: Int
+
+            if (anchorIndex != -1) {
+                fromIndex = minOf(anchorIndex, targetIndex)
+                toIndex = maxOf(anchorIndex, targetIndex)
+            } else {
+                val firstSelectedIndex = currentList.indexOfFirst { state.selectedMediaIds.contains(it.id) }
+                if (firstSelectedIndex != -1) {
+                    fromIndex = minOf(firstSelectedIndex, targetIndex)
+                    toIndex = maxOf(firstSelectedIndex, targetIndex)
+                } else {
+                    fromIndex = targetIndex
+                    toIndex = targetIndex
+                }
+            }
+
+            val set = state.selectedMediaIds.toMutableSet()
+            for (i in fromIndex..toIndex) {
+                set.add(currentList[i].id)
+            }
+            rangeCount = (toIndex - fromIndex + 1)
+
+            state.copy(
+                selectedMediaIds = set,
+                lastSelectedMediaId = targetItem.id,
+                isSelectionMode = set.isNotEmpty()
+            )
+        }
+        return rangeCount
     }
 
     fun selectMonthBatch(monthItem: GalleryItem.MonthHeader) {
@@ -209,13 +273,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             state.copy(
                 selectedMediaIds = set,
+                lastSelectedMediaId = if (set.isNotEmpty()) monthIds.lastOrNull() else null,
                 isSelectionMode = set.isNotEmpty()
             )
         }
     }
 
     fun clearMediaSelection() {
-        _uiState.update { it.copy(selectedMediaIds = emptySet(), isSelectionMode = false) }
+        _uiState.update { it.copy(selectedMediaIds = emptySet(), lastSelectedMediaId = null, isSelectionMode = false) }
     }
 
     fun getSelectedMediaItems(): List<MediaItem> {
@@ -306,6 +371,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             state.copy(
                 selectedMediaIds = if (select) allIds else emptySet(),
+                lastSelectedMediaId = if (select) allIds.firstOrNull() else null,
                 isSelectionMode = select && allIds.isNotEmpty()
             )
         }

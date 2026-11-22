@@ -6,8 +6,8 @@
         <Autor>WoRFReD</Autor>
         <Canal>FlashChip</Canal>
         <FechaCreacion>Octubre 2026</FechaCreacion>
-        <VersionActual>1.24</VersionActual>
-        <VersionCodeActual>124</VersionCodeActual>
+        <VersionActual>1.25</VersionActual>
+        <VersionCodeActual>125</VersionCodeActual>
         <UbicacionProyecto>C:\APPs_Atigravity\FlashGallery_APK</UbicacionProyecto>
     </Proyecto>
 
@@ -322,6 +322,19 @@
                 <Cambio tipo="nueva_funcion">Filtro Modo Documento / Escáner: conversión a blanco y negro de alto contraste que limpia fondos grises y sombras en fotos de tickets, facturas o pizarras dejando el texto ultra legible.</Cambio>
                 <Cambio tipo="nueva_funcion">Giro, espejo y redimensionado: rotación rápida de 90° en 90°, efecto espejo horizontal y exportación opcional en 1080p o 720p para compartir rápido sin gastar datos.</Cambio>
                 <Cambio tipo="optimizacion">Guardado no destructivo: guarda siempre una copia en Pictures/FlashGallery manteniendo intacta la foto original, con indexación inmediata en MediaScanner.</Cambio>
+            </Cambios>
+        </Version>
+        <!-- ========================================== -->
+        <!-- Versión 1.25                               -->
+        <!-- ========================================== -->
+        <Version id="1.25" codigo="125">
+            <Fecha>22/11/2026</Fecha>
+            <Titulo>Selección múltiple por Rango ("Desde aquí hasta allí" / Shift-Click táctil)</Titulo>
+            <Cambios>
+                <Cambio tipo="nueva_funcion">Selección múltiple por rango ("Desde aquí hasta allí"): permite seleccionar instantáneamente decenas o cientos de fotos y vídeos contiguos. Basta con dejar pulsada la primera foto para iniciar la selección, navegar a la foto de destino y mantenerla pulsada para marcar automáticamente todo el bloque intermedio en 1 milisegundo.</Cambio>
+                <Cambio tipo="interfaz">Subtítulo de ayuda interactivo en la barra de selección: muestra claramente "Mantén pulsada otra foto para rango" bajo el contador de seleccionados, facilitando el uso sin necesidad de aprender comandos complejos.</Cambio>
+                <Cambio tipo="interfaz">Notificación visual y respuesta táctil (Haptic Feedback): vibración háptica instantánea y aviso flotante (Toast) indicando la cantidad exacta de elementos seleccionados en el rango ("⚡ X fotos seleccionadas en rango").</Cambio>
+                <Cambio tipo="optimizacion">Soporte total en carpetas y línea de tiempo: cálculo ultra eficiente de índices tanto dentro de álbumes específicos de apps (WhatsApp, Capturas de pantalla, Cámara) como en la cuadrícula cronológica general.</Cambio>
             </Cambios>
         </Version>
     </HistorialVersiones>

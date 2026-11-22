@@ -1,4 +1,4 @@
-// Version 1.09 - FlashGallery
+// Version 1.25 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.ui.screens
@@ -114,6 +114,7 @@ fun PhotosScreen(
     onSelectFolder: (AppFolder?) -> Unit,
     onMediaClick: (MediaItem) -> Unit,
     onToggleSelectMedia: (MediaItem) -> Unit,
+    onSelectMediaRange: (MediaItem) -> Unit,
     onSelectMonthBatch: (GalleryItem.MonthHeader) -> Unit
 ) {
     val context = LocalContext.current
@@ -284,7 +285,13 @@ fun PhotosScreen(
                                 onMediaClick(media)
                             }
                         },
-                        onLongClick = { onToggleSelectMedia(media) }
+                        onLongClick = {
+                            if (isSelectionMode) {
+                                onSelectMediaRange(media)
+                            } else {
+                                onToggleSelectMedia(media)
+                            }
+                        }
                     )
                 }
             }
@@ -384,7 +391,13 @@ fun PhotosScreen(
                                                 onMediaClick(item.item)
                                             }
                                         },
-                                        onLongClick = { onToggleSelectMedia(item.item) }
+                                        onLongClick = {
+                                            if (isSelectionMode) {
+                                                onSelectMediaRange(item.item)
+                                            } else {
+                                                onToggleSelectMedia(item.item)
+                                            }
+                                        }
                                     )
                                 }
                             }

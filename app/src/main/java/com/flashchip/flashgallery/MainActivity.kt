@@ -1,4 +1,4 @@
-// Version 1.19 - FlashGallery
+// Version 1.25 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery
@@ -319,12 +319,21 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
                     // Selection Action Bar
                     TopAppBar(
                         title = {
-                            Text(
-                                text = "${uiState.selectedMediaIds.size} seleccionados",
-                                color = TextPrimary,
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Column {
+                                Text(
+                                    text = "${uiState.selectedMediaIds.size} seleccionados",
+                                    color = TextPrimary,
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Mantén pulsada otra foto para rango",
+                                    color = FlashCyan,
+                                    fontSize = 11.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         },
                         navigationIcon = {
                             IconButton(onClick = { viewModel.clearMediaSelection() }) {
@@ -598,6 +607,12 @@ fun FlashGalleryApp(viewModel: MainViewModel) {
                         onSelectFolder = { viewModel.openAppFolder(it) },
                         onMediaClick = { viewModel.openViewer(it) },
                         onToggleSelectMedia = { viewModel.toggleSelectMedia(it) },
+                        onSelectMediaRange = { targetMedia ->
+                            val count = viewModel.selectMediaRangeTo(targetMedia)
+                            if (count > 1) {
+                                Toast.makeText(context, "⚡ $count fotos seleccionadas en rango", Toast.LENGTH_SHORT).show()
+                            }
+                        },
                         onSelectMonthBatch = { viewModel.selectMonthBatch(it) }
                     )
 

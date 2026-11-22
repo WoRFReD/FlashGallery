@@ -1,4 +1,4 @@
-// Version 1.18 - FlashGallery
+// Version 1.25 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.ui.components

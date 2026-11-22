@@ -1,7 +1,7 @@
 # 📋 HISTORIAL Y CONTROL DE VERSIONES
 > **Proyecto:** FlashGallery  
 > **Autor:** WoRFReD • **Canal:** FlashChip (https://youtube.com/@flashchiped)  
-> **Versión Actual:** 1.24 • **Código:** 124 • **Fecha de Inicio:** 14/10/2026  
+> **Versión Actual:** 1.25 • **Código:** 125 • **Fecha de Inicio:** 14/10/2026  
 > **Ubicación:** C:\APPs_Atigravity\FlashGallery_APK  
 
 ---
@@ -13,6 +13,16 @@ Cada nueva versión debe documentar sus modificaciones usando estos identificado
 * 🔴 **[CORRECCION]**: Solución de bugs, crashes, cierres inesperados o fallos de compilación.
 * 🔵 **[OPTIMIZACION]**: Reducción de tiempos de carga, memoria, peso de APK o rendimiento.
 * 🟣 **[SEGURIDAD]**: Permisos de Android, firmas, certificados o compatibilidad.
+
+---
+
+## 🚀 Versión 1.25 (Código: 125) — 22/11/2026
+### *Selección múltiple por Rango ("Desde aquí hasta allí" / Shift-Click táctil)*
+
+* 🟢 **[NUEVA_FUNCION]**: Selección múltiple por rango ("Desde aquí hasta allí"): permite seleccionar instantáneamente decenas o cientos de fotos y vídeos contiguos. Basta con dejar pulsada la primera foto para iniciar la selección, navegar a la foto de destino y mantenerla pulsada para marcar automáticamente todo el bloque intermedio en 1 milisegundo.
+* 🟡 **[INTERFAZ]**: Subtítulo de ayuda interactivo en la barra de selección: muestra claramente *"Mantén pulsada otra foto para rango"* bajo el contador de seleccionados, facilitando el uso sin necesidad de aprender comandos complejos.
+* 🟡 **[INTERFAZ]**: Notificación visual y respuesta táctil (Haptic Feedback): vibración háptica instantánea y aviso flotante (Toast) indicando la cantidad exacta de elementos seleccionados en el rango (*"⚡ X fotos seleccionadas en rango"*).
+* 🔵 **[OPTIMIZACION]**: Soporte total en carpetas y línea de tiempo: cálculo ultra eficiente de índices tanto dentro de álbumes específicos de apps (WhatsApp, Capturas de pantalla, Cámara) como en la cuadrícula cronológica general.
 
 ---
 
