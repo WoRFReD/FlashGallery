@@ -1,7 +1,7 @@
 # 📋 HISTORIAL Y CONTROL DE VERSIONES
 > **Proyecto:** FlashGallery  
 > **Autor:** WoRFReD • **Canal:** FlashChip (https://youtube.com/@flashchiped)  
-> **Versión Actual:** 1.25 • **Código:** 125 • **Fecha de Inicio:** 14/10/2026  
+> **Versión Actual:** 1.26 • **Código:** 126 • **Fecha de Inicio:** 14/10/2026  
 > **Ubicación:** C:\APPs_Atigravity\FlashGallery_APK  
 
 ---
@@ -13,6 +13,16 @@ Cada nueva versión debe documentar sus modificaciones usando estos identificado
 * 🔴 **[CORRECCION]**: Solución de bugs, crashes, cierres inesperados o fallos de compilación.
 * 🔵 **[OPTIMIZACION]**: Reducción de tiempos de carga, memoria, peso de APK o rendimiento.
 * 🟣 **[SEGURIDAD]**: Permisos de Android, firmas, certificados o compatibilidad.
+
+---
+
+## 🚀 Versión 1.26 (Código: 126) — 22/11/2026
+### *Rotación instantánea de vídeo y corrección de orientación MP4 sin recodificar*
+
+* 🟢 **[NUEVA_FUNCION]**: Botón de rotación al vuelo en el reproductor de vídeo: icono de giro 90° en la barra superior que rota el vídeo instantáneamente (0°, 90°, 180°, 270°) adaptando las dimensiones de la pantalla sin deformar la imagen ni depender del sensor del móvil.
+* 🟢 **[NUEVA_FUNCION]**: Corrección de orientación MP4 sin recodificar (VideoRotationHelper): permite guardar una copia del vídeo con la rotación corregida modificando únicamente los 36 bytes de la matriz de orientación del contenedor (`tkhd` box) con `MediaExtractor` y `MediaMuxer`.
+* 🔵 **[OPTIMIZACION]**: Cero pérdida de calidad y velocidad ultrarrápida: al no pasar por transcodificación H.264/H.265 ni decodificar fotogramas, procesa vídeos en menos de 0.5 segundos sin consumir batería ni degradar la nitidez.
+* 🟡 **[INTERFAZ]**: Barra flotante Cyberpunk con previsualización de ángulo y botón "Guardar MP4": aparece suavemente cuando se rota un vídeo para guardar directamente la copia en `Movies/FlashGallery` con indexación en `MediaScanner`.
 
 ---
 

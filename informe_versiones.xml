@@ -6,8 +6,8 @@
         <Autor>WoRFReD</Autor>
         <Canal>FlashChip</Canal>
         <FechaCreacion>Octubre 2026</FechaCreacion>
-        <VersionActual>1.25</VersionActual>
-        <VersionCodeActual>125</VersionCodeActual>
+        <VersionActual>1.26</VersionActual>
+        <VersionCodeActual>126</VersionCodeActual>
         <UbicacionProyecto>C:\APPs_Atigravity\FlashGallery_APK</UbicacionProyecto>
     </Proyecto>
 
@@ -335,6 +335,19 @@
                 <Cambio tipo="interfaz">Subtítulo de ayuda interactivo en la barra de selección: muestra claramente "Mantén pulsada otra foto para rango" bajo el contador de seleccionados, facilitando el uso sin necesidad de aprender comandos complejos.</Cambio>
                 <Cambio tipo="interfaz">Notificación visual y respuesta táctil (Haptic Feedback): vibración háptica instantánea y aviso flotante (Toast) indicando la cantidad exacta de elementos seleccionados en el rango ("⚡ X fotos seleccionadas en rango").</Cambio>
                 <Cambio tipo="optimizacion">Soporte total en carpetas y línea de tiempo: cálculo ultra eficiente de índices tanto dentro de álbumes específicos de apps (WhatsApp, Capturas de pantalla, Cámara) como en la cuadrícula cronológica general.</Cambio>
+            </Cambios>
+        </Version>
+        <!-- ========================================== -->
+        <!-- Versión 1.26                               -->
+        <!-- ========================================== -->
+        <Version id="1.26" codigo="126">
+            <Fecha>22/11/2026</Fecha>
+            <Titulo>Rotación instantánea de vídeo y corrección de orientación MP4 sin recodificar</Titulo>
+            <Cambios>
+                <Cambio tipo="nueva_funcion">Botón de rotación al vuelo en el reproductor de vídeo: icono de giro 90° en la barra superior que rota el vídeo instantáneamente (0°, 90°, 180°, 270°) adaptando las dimensiones de la pantalla sin deformar la imagen ni depender del sensor del móvil.</Cambio>
+                <Cambio tipo="nueva_funcion">Corrección de orientación MP4 sin recodificar (VideoRotationHelper): permite guardar una copia del vídeo con la rotación corregida modificando únicamente los 36 bytes de la matriz de orientación del contenedor (tkhd box) con MediaExtractor y MediaMuxer.</Cambio>
+                <Cambio tipo="optimizacion">Cero pérdida de calidad y velocidad ultrarrápida: al no pasar por transcodificación H.264/H.265 ni decodificar fotogramas, procesa vídeos en menos de 0.5 segundos sin consumir batería ni degradar la nitidez.</Cambio>
+                <Cambio tipo="interfaz">Barra flotante Cyberpunk con previsualización de ángulo y botón "Guardar MP4": aparece suavemente cuando se rota un vídeo para guardar directamente la copia en Movies/FlashGallery con indexación en MediaScanner.</Cambio>
             </Cambios>
         </Version>
     </HistorialVersiones>

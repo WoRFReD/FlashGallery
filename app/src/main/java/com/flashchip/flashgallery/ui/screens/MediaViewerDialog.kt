@@ -1,4 +1,4 @@
-// Version 1.24 - FlashGallery
+// Version 1.26 - FlashGallery
 // Developed for FlashChip by WoRFReD
 
 package com.flashchip.flashgallery.ui.screens
@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,7 +24,9 @@ import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -40,14 +43,18 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.RotateRight
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
 import com.flashchip.flashgallery.ui.components.PhotoEditorDialog
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -60,6 +67,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -89,12 +97,15 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.flashchip.flashgallery.data.MediaRepository
+import com.flashchip.flashgallery.data.VideoRotationHelper
 import com.flashchip.flashgallery.model.MediaItem
 import com.flashchip.flashgallery.model.ExifMetadata
 import com.flashchip.flashgallery.data.OcrScanResult
 import com.flashchip.flashgallery.data.OcrScanner
 import com.flashchip.flashgallery.ui.components.ExifDetailContent
 import com.flashchip.flashgallery.ui.components.OcrSelectionSheet
+import com.flashchip.flashgallery.ui.theme.BgDark
+import com.flashchip.flashgallery.ui.theme.FlashAmber
 import com.flashchip.flashgallery.ui.theme.FlashCyan
 import com.flashchip.flashgallery.ui.theme.FlashRed
 import com.flashchip.flashgallery.ui.theme.SurfaceDark
@@ -142,9 +153,14 @@ fun MediaViewerDialog(
     // Nivel de zoom de la foto actual (1f = tamaño original, >1f = ampliado)
     var currentPhotoScale by remember { mutableFloatStateOf(1f) }
 
+    // Rotación al vuelo de vídeo y guardado rápido sin recodificar
+    var videoRotationDegrees by remember { mutableIntStateOf(0) }
+    var isSavingVideoRotation by remember { mutableStateOf(false) }
+
     // Al deslizar a otra página se restablece el zoom y se cierran hojas abiertas
     LaunchedEffect(pagerState.currentPage) {
         currentPhotoScale = 1f
+        videoRotationDegrees = 0
         showExifSheet = false
         showOcrSheet = false
         ocrScanResult = null
@@ -256,6 +272,7 @@ fun MediaViewerDialog(
                         VideoPlayerPage(
                             item = item,
                             isCurrentPage = page == pagerState.currentPage,
+                            rotationDegrees = if (page == pagerState.currentPage) videoRotationDegrees else 0,
                             onTap = { showControls = !showControls }
                         )
                     } else {
@@ -350,7 +367,7 @@ fun MediaViewerDialog(
                         )
                     }
 
-                    // Botón Reconocer Texto OCR (Live Text)
+                    // Botones de acción según el tipo de archivo (Foto vs Vídeo)
                     if (!currentItem.isVideo) {
                         IconButton(
                             onClick = {
@@ -371,6 +388,19 @@ fun MediaViewerDialog(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = "Editar foto",
                                 tint = FlashCyan
+                            )
+                        }
+                    } else {
+                        // Botón Girar Vídeo 90° (Opción A)
+                        IconButton(
+                            onClick = {
+                                videoRotationDegrees = (videoRotationDegrees + 90) % 360
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.RotateRight,
+                                contentDescription = "Girar vídeo 90°",
+                                tint = if (videoRotationDegrees != 0) FlashAmber else FlashCyan
                             )
                         }
                     }
@@ -399,6 +429,123 @@ fun MediaViewerDialog(
                             contentDescription = "Eliminar",
                             tint = FlashRed
                         )
+                    }
+                }
+            }
+
+            // Barra flotante Cyberpunk para guardar la rotación del vídeo sin recodificar (Opción B)
+            AnimatedVisibility(
+                visible = showControls && currentItem.isVideo && videoRotationDegrees != 0,
+                enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
+                exit = fadeOut() + slideOutVertically(targetOffsetY = { -it }),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 70.dp)
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .clip(RoundedCornerShape(24.dp)),
+                    color = SurfaceDark.copy(alpha = 0.95f),
+                    border = BorderStroke(1.dp, FlashCyan),
+                    tonalElevation = 8.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.RotateRight,
+                            contentDescription = null,
+                            tint = FlashAmber,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "Giro: +${videoRotationDegrees}°",
+                            color = TextPrimary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Button(
+                            onClick = {
+                                if (!isSavingVideoRotation) {
+                                    isSavingVideoRotation = true
+                                    coroutineScope.launch {
+                                        try {
+                                            val savedFile = VideoRotationHelper.rotateVideoWithoutReencoding(
+                                                context = context,
+                                                sourceUri = currentItem.uri,
+                                                sourceName = currentItem.name,
+                                                extraRotationDegrees = videoRotationDegrees
+                                            )
+                                            if (savedFile != null && savedFile.exists()) {
+                                                Toast.makeText(
+                                                    context,
+                                                    "⚡ Vídeo guardado sin recodificar en Movies/FlashGallery",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                                videoRotationDegrees = 0
+                                                onRefresh()
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Error al rotar el contenedor del vídeo",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        } catch (e: Exception) {
+                                            Toast.makeText(
+                                                context,
+                                                "Fallo al procesar vídeo: ${e.localizedMessage}",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        } finally {
+                                            isSavingVideoRotation = false
+                                        }
+                                    }
+                                }
+                            },
+                            enabled = !isSavingVideoRotation,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = FlashCyan,
+                                contentColor = BgDark
+                            ),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            modifier = Modifier.height(30.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            if (isSavingVideoRotation) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(14.dp),
+                                    color = BgDark,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Save,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Guardar MP4",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        IconButton(
+                            onClick = { videoRotationDegrees = 0 },
+                            modifier = Modifier.size(26.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Restablecer giro",
+                                tint = TextSecondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -652,12 +799,14 @@ private fun PhotoViewerPage(
 
 /**
  * Página para reproducir un vídeo con ExoPlayer sin atrapar los gestos de deslizamiento lateral
+ * Permite rotación al vuelo (0°, 90°, 180°, 270°) adaptando el tamaño del lienzo
  */
 @OptIn(UnstableApi::class)
 @Composable
 private fun VideoPlayerPage(
     item: MediaItem,
     isCurrentPage: Boolean,
+    rotationDegrees: Int = 0,
     onTap: () -> Unit
 ) {
     val context = LocalContext.current
@@ -685,7 +834,7 @@ private fun VideoPlayerPage(
         }
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) {
@@ -704,15 +853,28 @@ private fun VideoPlayerPage(
             },
         contentAlignment = Alignment.Center
     ) {
-        AndroidView(
-            factory = { ctx ->
-                PlayerView(ctx).apply {
-                    player = exoPlayer
-                    useController = false // Evita que PlayerView capture los gestos táctiles horizontales
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+        val isRotatedSideways = rotationDegrees % 180 != 0
+        val targetWidth = if (isRotatedSideways) maxHeight else maxWidth
+        val targetHeight = if (isRotatedSideways) maxWidth else maxHeight
+
+        Box(
+            modifier = Modifier
+                .size(targetWidth, targetHeight)
+                .graphicsLayer {
+                    rotationZ = rotationDegrees.toFloat()
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            AndroidView(
+                factory = { ctx ->
+                    PlayerView(ctx).apply {
+                        player = exoPlayer
+                        useController = false // Evita que PlayerView capture los gestos táctiles horizontales
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
         // Botón Play/Pause central flotante
         AnimatedVisibility(
